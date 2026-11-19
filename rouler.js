@@ -1,4 +1,4 @@
-/* Page « Rouler ensemble » : séances des 14 prochains jours (profil, .fit, agenda), séances faites */
+/* Page « Entraînement » : séances des 14 prochains jours (profil, .fit, agenda), séances faites */
 const jbMoment = { morning: 'le matin', noon: 'le midi', afternoon: 'l’après-midi', evening: 'le soir' };
 const jbBike = (s) => s === 'spt_B41yRYTUXKNmWr8' || s === 'spt_wSAjGr1yXKlkEVU';
 const jbZoneOf = (w, cp, pma) => {
@@ -16,7 +16,8 @@ const jbStepText = (b, cp, pma) => {
   const z = jbZoneOf(jbMid(b), cp, pma);
   const dur = b[0] >= 60 ? J.dur(b[0] / 60) : b[0] + ' s';
   if (lo == null) return dur + ' · libre';
-  return dur + ' · Z' + (z + 1) + ' · ' + (hi != null && hi !== lo ? lo + '-' + hi : lo) + ' % CP';
+  const w0 = Math.round(b[1]), w1 = b[2] != null ? Math.round(b[2]) : null;
+  return dur + ' · Z' + (z + 1) + ' · ' + (w1 != null && w1 !== w0 ? w0 + '-' + w1 : w0) + ' W';
 };
 const jbSteps = (tree, cp, pma) => {
   const ul = J.el('ul', 'steps');
