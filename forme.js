@@ -122,7 +122,7 @@ dash.draw('totaux', (el) => {
   sign('Heures d’entraînement', J.num(d.heures, 1), 'h', J.num(d.heures_velo, 1) + ' h à vélo');
   sign('Séances', J.num(d.seances), null, d.renfo + ' de renfo');
   sign('Charge cumulée', J.num(d.tss), 'TSS', 'depuis la reprise');
-  if (d.long_h) sign('Plus longue sortie', J.num(d.long_h, 1), 'h', J.dm(d.long_date) + (d.loin_km ? ' · plus loin : ' + d.loin_km + ' km' : ''));
+  if (d.long_h) sign('Plus longue sortie', J.num(d.long_h, 1), 'h', J.dm(d.long_date));
 });
 
 dash.draw('records', (el) => {
