@@ -28,7 +28,7 @@ button, select { font: inherit; color: inherit; }
 
 /* ---------- En-tête ---------- */
 .top { padding: 26px 0 10px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
-.brand { font-family: var(--f-cond); font-weight: 700; font-size: clamp(34px, 6vw, 56px); line-height: .9; letter-spacing: -.01em; margin: 0; }
+.brand { font-family: var(--f-cond); font-weight: 800; font-size: clamp(40px, 7vw, 64px); line-height: .9; letter-spacing: -.01em; margin: 0; }
 .brand small { display: block; font-weight: 500; font-size: .42em; letter-spacing: .02em; color: var(--muted); margin-top: 6px; }
 .maj { font-size: 13px; color: var(--muted); }
 .nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 4px; overflow-x: auto; padding: 10px 0; margin-bottom: 8px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px); scrollbar-width: none; }
@@ -215,6 +215,22 @@ h3 { font-family: var(--f-cond); font-weight: 600; font-size: 21px; line-height:
 .medal-n { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
 .locked .medal { filter: grayscale(1); opacity: .45; }
 
+/* Duel contre le plan */
+.lane { display: grid; grid-template-columns: 70px 1fr 90px; gap: 10px; align-items: center; margin-top: 10px; }
+.lane-n { font-family: var(--f-cond); font-weight: 700; font-size: 18px; }
+.lane-t { position: relative; height: 14px; border-radius: 7px; background: var(--soft); margin-top: 14px; }
+.lane-t i { display: block; height: 100%; border-radius: 7px; }
+.lane-r { position: absolute; top: -26px; }
+.lane-v { font-family: var(--f-cond); font-weight: 600; font-size: 17px; text-align: right; font-variant-numeric: tabular-nums; }
+.wstrip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.wstrip span { min-width: 64px; padding: 6px 8px; border-radius: 8px; background: var(--soft); text-align: center; border: 1px solid var(--line); }
+.wstrip span b { display: block; font-family: var(--f-cond); font-size: 18px; font-variant-numeric: tabular-nums; }
+.wstrip span small { font-size: 11px; color: var(--muted); }
+.wstrip .win { background: color-mix(in srgb, var(--vert) 22%, var(--card)); border-color: var(--vert); }
+.wstrip .mid { background: color-mix(in srgb, var(--warn) 20%, var(--card)); border-color: var(--warn); }
+.wstrip .lose { background: color-mix(in srgb, var(--pois) 16%, var(--card)); border-color: var(--pois); }
+.wstrip .now { border: 1.5px dashed var(--ink); }
+
 /* ---------- Pied de page ---------- */
 .foot { margin-top: 30px; font-size: 13px; color: var(--muted); }
 .foot summary { cursor: pointer; }
@@ -222,6 +238,7 @@ h3 { font-family: var(--f-cond); font-weight: 600; font-size: 21px; line-height:
 
 @media (max-width: 760px) {
   .days { grid-template-columns: repeat(7, 128px); overflow-x: auto; padding-bottom: 6px; }
+  .lane { grid-template-columns: 56px 1fr 74px; }
   .sess { grid-template-columns: 1fr; }
   .sess-day { border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 8px; display: flex; gap: 10px; align-items: baseline; text-align: left; }
   .sess-day b { font-size: 28px; }
