@@ -1,4 +1,4 @@
-/* Page « Ma saison » : frise, chiffres du jour, compte à rebours, 14 jours, bloc en cours, charge par semaine */
+/* Page « Ma saison » : frise, chiffres du jour, charge par semaine, 7 jours, bloc en cours (le compte à rebours s'affiche dans Courses) */
 window.jbBloc = null; // mésocycle choisi dans la frise (nom), sinon celui en cours
 
 const jbCurMeso = () => { const cy = dash.data('cycles'); return cy.status === 'ok' ? cy.data.find((x) => x.debut <= J.today && (x.fin || x.debut) >= J.today) : null; };
@@ -88,19 +88,23 @@ dash.draw('frise', (el) => {
     if (o.type === 'a') flags.push({ d: o.date, k: 'a', t: o.code || 'A', n: o.nom, s, km: o.km, dp: o.dplus });
     else if (o.type === 'b') flags.push({ d: o.date, k: 'b', t: 'B', n: o.nom, s, km: o.km, dp: o.dplus });
     else if (o.code === 'C') flags.push({ d: o.date, k: 'c', t: 'C', n: o.nom, s, km: o.km, dp: o.dplus });
+    else if (s !== 'Refusée' && String(o.entete || '').toUpperCase().startsWith('CHALLENGE')) flags.push({ d: o.date, k: 'ch', t: 'Challenge', n: o.nom, s, km: o.km, dp: o.dplus });
+    else if (s === 'Gardée') flags.push({ d: o.date, k: 'm', t: 'Course', n: o.nom, s, km: o.km, dp: o.dplus });
   }
   for (const n of notes) {
     if (n.type === 'goal' || /^C · /.test(n.nom || '')) flags.push({ d: n.debut, k: 'c', t: 'C', n: String(n.nom).replace(/^C · /, ''), s: '' });
     else if (/^Week-end choc/i.test(n.nom || '')) flags.push({ d: n.debut, k: 'w', t: 'W', n: n.nom, s: '' });
   }
-  const H_ = { a: yTop - 8, b: yTop + 40, c: yTop + 82, w: yTop + 100 };
-  const COL = { a: 'var(--jaune)', b: 'var(--vert)', c: 'var(--pois)', w: 'var(--pois)' };
-  flags.sort((p, q) => ({ w: 0, c: 1, b: 2, a: 3 }[p.k] - { w: 0, c: 1, b: 2, a: 3 }[q.k]));
+  const H_ = { a: yTop - 8, b: yTop + 40, ch: yTop + 60, c: yTop + 82, w: yTop + 100, m: yTop + 122 };
+  const COL = { a: 'var(--jaune)', b: 'var(--vert)', c: 'var(--pois)', w: 'var(--pois)', ch: '#8E5BD6', m: 'var(--card)' };
+  const ORD = { m: 0, w: 1, c: 2, ch: 3, b: 4, a: 5 };
+  flags.sort((p, q) => ORD[p.k] - ORD[q.k]);
   for (const f of flags) {
     const fx = x(P(f.d)), top = H_[f.k];
     const g = svg.append('g').style('cursor', 'default');
     g.append('line').attr('x1', fx).attr('x2', fx).attr('y1', yBase).attr('y2', top).style('stroke', 'var(--ink)').style('stroke-width', f.k === 'a' ? 1.6 : 1).style('opacity', f.s === 'Sélection requise' ? 0.5 : 0.85);
     if (f.k === 'w') g.append('path').attr('d', `M${fx},${top} l9,4 l-9,4 z`).style('fill', 'var(--card)').style('stroke', 'var(--pois)').style('stroke-width', 1.5);
+    else if (f.k === 'm') g.append('path').attr('d', `M${fx},${top} l10,4 l-10,4 z`).style('fill', 'var(--card)').style('stroke', 'var(--ink)').style('stroke-width', 1.2);
     else g.append('path').attr('d', `M${fx},${top} l${f.k === 'a' ? 20 : 14},${f.k === 'a' ? 7 : 5} l-${f.k === 'a' ? 20 : 14},${f.k === 'a' ? 7 : 5} z`).style('fill', COL[f.k]).style('stroke', f.s === 'Sélection requise' ? 'var(--ink)' : 'none').style('stroke-dasharray', '2 2');
     if (f.k === 'a') {
       const nextA = flags.filter((q) => q.k === 'a' && q.d > f.d).map((q) => x(P(q.d))).sort((p, q) => p - q)[0];
@@ -187,7 +191,7 @@ dash.draw('bibs', (el) => {
   }
 });
 
-/* ---------- 14 prochains jours ---------- */
+/* ---------- 7 prochains jours ---------- */
 dash.draw('days14', (el) => {
   const pv = dash.data('prevu'), nt = dash.data('notes'), ob = dash.data('objectifs'), s7 = dash.data('seances7');
   if (J.wait(el, pv)) return;
@@ -195,7 +199,7 @@ dash.draw('days14', (el) => {
   const grid = J.el('div', 'days');
   const moments = {}; if (s7.status === 'ok') for (const s of s7.data) moments[s.id] = s.moment;
   const MOM = { morning: 'matin', noon: 'midi', afternoon: 'après-midi', evening: 'soir' };
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = J.add(J.today, i);
     const ses = pv.data.filter((p) => p.date === d);
     const races = ob.status === 'ok' ? ob.data.filter((o) => o.date === d) : [];
