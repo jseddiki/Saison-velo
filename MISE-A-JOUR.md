@@ -31,7 +31,7 @@ Le site (index.html et les scripts) ne change pas. Seuls `data/jour.json` (chaqu
 - **seances7** (aujourd'hui à J+6) : chaque séance prévue de la fenêtre. `moment` = son champ `moment` s'il existe, sinon "". Pour une séance de sport `spt_B41yRYTUXKNmWr8` (route) ou `spt_wSAjGr1yXKlkEVU` (home trainer), lis `get_planned_training` avec son id et écris `profil` = l'arbre de `workout` : une étape → `[durée en s, W bas, W haut]` (cible dont l'unité résolue est W, sinon `null, null`) ; une répétition → `{"x": nombre de fois, "s": [ses étapes]}`. Autres sports : `profil` = [].
 - **recentes** (7 derniers jours, les plus récentes d'abord) : chaque séance réalisée. Champs comme `reel` plus `tss` (`load.coggan`) et `masque` (true si `restriction` non nul). Pour une séance non masquée avec durée : `get_training` avec `laps` true ; `tours` = pour chaque tour de source `device` (ou tous s'il n'y en a aucun) `[durée en s, watts_avg ou null, heartrate_avg ou null]`. Sinon `tours` = [].
 
-## data/hebdo.json (le dimanche, ou s'il manque, ou s'il a plus de 7 jours)
+## data/hebdo.json (le dimanche, ou s'il manque, ou s'il a plus de 7 jours, ou si un de ses objectifs n'a pas la clé `lieu`)
 ```
 {
   "maj": "AAAA-MM-JJTHH:MM",
@@ -40,7 +40,7 @@ Le site (index.html et les scripts) ne change pas. Seuls `data/jour.json` (chaqu
   "prevu": [[id, date, nom, sport, duree_min, tss], …],
   "reel": [[id, date, nom, sport, prevue, duree_s, km, dplus, zones], …],
   "notes": [ {id, nom, debut, fin, type, duree_s, texte}, … ],
-  "objectifs": [ {id, nom, date, type, code, etiquette, entete, texte, km, dplus}, … ],
+  "objectifs": [ {id, nom, date, type, code, etiquette, entete, texte, km, dplus, lieu}, … ],
   "cycles": [ {nom, debut, fin, couleur, description}, … ],
   "statuts": [ {id, nom, couleur}, … ],
   "saison_note": {nom, texte}
@@ -50,7 +50,7 @@ Le site (index.html et les scripts) ne change pas. Seuls `data/jour.json` (chaqu
 - **records** : `get_records` catégorie `ppr`, axe `time`, `top` 1, fenêtres [5, 60, 300, 720, 1200, 3600, 10800]. `records` : `date_from` 2026-10-26 ; `records_prev` : du 2025-10-26 au 2026-10-25 ; `records_all` : sans dates. Par record : fenêtre (s), watts, date.
 - **prevu** et **reel** : comme dans jour.json, mais sur toute la saison (du 2026-10-26 au 2027-10-31), toutes les pages.
 - **notes** : `get_calendar` mode `planned`, `types` ["notes"], saison, `full_descriptions` true. Garder seulement les notes de type `goal` ou `availability`, et celles dont le nom commence par « C · » ou « Week-end choc ». Par note : `id`, nom, `date_start`, `date_end` (ou date_start), `note_type` (ou ""), `duration.value` ou null, texte de `description`.
-- **objectifs** : `get_calendar` mode `planned`, `types` ["competitions"], saison, `full_descriptions` true. Par course : `id`, nom, `date_start`, `goal_type` (ou ""), code = `A1`, `A2`, `A3`, `B` ou `C` lu après « OBJECTIF » dans la description (sinon ""), etiquette = premier élément de `tags` (ou ""), entete = première ligne de la description, texte = description complète, km (`distance.value`), dplus (`elevation_gain.value`).
+- **objectifs** : `get_calendar` mode `planned`, `types` ["competitions"], saison, `full_descriptions` true. Par course : `id`, nom, `date_start`, `goal_type` (ou ""), code = `A1`, `A2`, `A3`, `B` ou `C` lu après « OBJECTIF » dans la description (sinon ""), etiquette = premier élément de `tags` (ou ""), entete = première ligne de la description, texte = description complète, km (`distance.value`), dplus (`elevation_gain.value`), lieu = texte de `location` (ou "").
 - **cycles** : `get_calendar` mode `planned`, `types` ["cycles"], saison, `full_descriptions` true. Par cycle : nom, `date_start`, `date_end`, `color`, texte de `description`.
 - **statuts** : `list_tags`. Par étiquette : `id`, nom, `color`.
 - **saison_note** : `nolio_api_read` `library/note_frames/nfr_huSyXRRDBcLJEfV/` : nom et texte de la description.

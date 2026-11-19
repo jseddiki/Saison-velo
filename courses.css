@@ -74,3 +74,38 @@
 .strip .month-l { font-family: var(--f-cond); font-weight: 600; font-size: 14px; fill: var(--ink); text-transform: capitalize; }
 .strip .macro-l { font-size: 11px; fill: var(--muted); }
 .strip-card .vue { padding: 0 18px 8px; }
+
+/* Calendrier des courses : liste */
+.cl-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) 160px 90px 80px 70px; gap: 12px; align-items: center; }
+.cl-head { font-size: 12px; color: var(--muted); padding: 0 14px 4px 18px; }
+.cl-month { font-family: var(--f-cond); font-weight: 700; font-size: 20px; text-transform: capitalize; margin: 14px 0 4px; display: flex; align-items: center; gap: 10px; }
+.cl-month::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.cl { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--muted); border-radius: var(--r-md); margin-bottom: 6px; }
+.cl.r-a { border-left-color: var(--jaune); background: color-mix(in srgb, var(--jaune) 12%, var(--card)); }
+.cl.r-b { border-left-color: var(--vert); }
+.cl.r-c { border-left-color: var(--pois); }
+.cl.r-ch { border-left-color: #8E5BD6; }
+.cl.past { opacity: .6; }
+.cl.refused .cl-n b { text-decoration: line-through; color: var(--muted); }
+.cl > summary { list-style: none; cursor: pointer; padding: 9px 14px; }
+.cl > summary::-webkit-details-marker { display: none; }
+.cl[open] > summary { border-bottom: 1px dashed var(--line); }
+.cl-d b { font-family: var(--f-cond); font-weight: 700; font-size: 24px; line-height: 1; margin-right: 5px; }
+.cl-d span { font-size: 12px; color: var(--muted); }
+.cl-n b { font-weight: 600; }
+.cl-l { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-v { font-family: var(--f-cond); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; text-align: right; }
+.cl-j { font-family: var(--f-cond); font-weight: 600; font-size: 16px; color: var(--muted); text-align: right; white-space: nowrap; }
+.cl-mob { display: none; }
+.cl-b { padding: 10px 14px 14px; }
+.cl-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; }
+.cl-facts .l { display: block; font-size: 12px; color: var(--muted); }
+.cl-facts .v { font-weight: 600; }
+.cl-b .ev-text { margin-top: 10px; }
+@media (max-width: 760px) {
+  .cl-head { display: none; }
+  .cl > summary.cl-row { grid-template-columns: 52px 1fr auto; }
+  .cl-l, .cl-v { display: none; }
+  .cl-mob { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .cl-d b { display: block; }
+}
