@@ -1,4 +1,4 @@
-/* Page « Courses » : calendrier de la saison, pour les amis (je viens, agenda) et pour Johan (textes complets) */
+/* Page « Courses » : calendrier de la saison, pour les amis (agenda) et pour Johan (textes complets) */
 window.jbLabs = new Set(['objectif']);
 window.jbStat = new Set();
 window.jbMois = '';
@@ -33,12 +33,9 @@ const jbAmis = () => { const a = dash.data('amis'); return a.status === 'ok' && 
 
 const jbRaceActions = (r, km, dp) => {
   const box = J.el('div', 'actions');
-  const when = J.wd(r.debut, true) + ' ' + J.dm(r.debut) + (r.fin && r.fin !== r.debut ? ' au ' + J.dm(r.fin) : '');
-  const join = J.btn('Je viens', 'hand', 'go');
-  J.joinLink(join, 'Salut ' + window.CONFIG.prenom + ' ! Je viens avec toi à « ' + r.titre + ' » (' + when + ').');
   const cal = J.btn('Ajouter à mon agenda', 'cal');
   J.ics(cal, { uid: r.id, debut: r.debut, fin: r.fin, titre: r.titre, texte: [km ? km + ' km' : '', dp ? dp + ' m D+' : '', 'Avec ' + window.CONFIG.prenom, location.href.split('#')[0] + '#courses'].filter(Boolean).join(' · ') });
-  box.append(join, cal);
+  box.append(cal);
   return box;
 };
 

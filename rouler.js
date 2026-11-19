@@ -123,6 +123,7 @@ dash.draw('next14', (el) => {
     fact(J.dur(r.duree_min), '');
     if (r.tss != null) fact(String(Math.round(r.tss)), 'TSS');
     fact(J.jx(r.date), '');
+    const mt = J.meteo && J.meteo(r.date); if (mt) fact(mt, '');
     body.appendChild(facts);
     const f = J.friends(amis[r.id]); if (f) { f.style.marginTop = '6px'; body.appendChild(f); }
     let tree = [];
@@ -131,11 +132,6 @@ dash.draw('next14', (el) => {
     if (blocks.length) { jbProfile(body, blocks, cp, pma); body.appendChild(jbSteps(tree, cp, pma)); }
     else if (jbBike(r.sport) && later) body.appendChild(J.el('div', 'sub', 'Profil détaillé disponible 7 jours avant la séance.'));
     const acts = J.el('div', 'actions');
-    if (r.sport !== 'spt_vxmhSsLPpMbXD21') {
-      const join = J.btn(J.bike(r.sport) ? 'Je roule avec toi' : 'Je viens', 'hand', 'go');
-      J.joinLink(join, 'Salut ' + window.CONFIG.prenom + ' ! Je viens avec toi pour « ' + r.nom + ' », ' + J.wd(r.date, true) + ' ' + J.dm(r.date) + (jbMoment[r.moment] ? ' ' + jbMoment[r.moment] : '') + '.');
-      acts.appendChild(join);
-    }
     if (blocks.length && cp) {
       const a = J.btn('Télécharger pour Garmin (.fit)', 'dl');
       a.setAttribute('href', jbFit(r.nom, tree, cp));
