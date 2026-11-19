@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261119c">
+<link rel="stylesheet" href="style.css?v=20261119d">
+<link rel="stylesheet" href="courses.css?v=20261119d">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
 <body>
@@ -86,39 +87,23 @@
       <div class="sec-h"><h2 id="t-obj">Compte à rebours</h2></div>
       <div class="bibs" data-draw="bibs"></div>
     </section>
-    <section aria-label="Prochaines courses retenues"><div class="highlight" data-draw="nextraces"></div></section>
-    <section class="card flat">
-      <div class="filters" role="group" aria-label="Afficher">
-        <button type="button" class="chipbtn lab" data-lab="tout" aria-pressed="false">Tout</button>
-        <button type="button" class="chipbtn lab" data-lab="objectif" aria-pressed="true">Courses et objectifs</button>
-        <button type="button" class="chipbtn lab" data-lab="challenge" aria-pressed="false">Challenges</button>
-        <button type="button" class="chipbtn lab" data-lab="choc" aria-pressed="false">Week-ends chocs</button>
-        <button type="button" class="chipbtn lab" data-lab="macro" aria-pressed="false">Macrocycles</button>
-        <button type="button" class="chipbtn lab" data-lab="meso" aria-pressed="false">Mésocycles</button>
-        <button type="button" class="chipbtn lab" data-lab="vacances" aria-pressed="false">Vacances</button>
+    <section class="card flat" aria-label="Filtres"><div data-draw="cfilters"></div></section>
+    <section class="card strip-card" aria-labelledby="t-strip">
+      <div class="sec-h"><h2 id="t-strip">La saison en un coup d'œil</h2><span class="sub">Touche une course pour l'ouvrir plus bas · zones hachurées : 5 semaines ou plus sans course</span></div>
+      <div class="strip-scroll"><div class="strip" data-draw="cstrip"></div></div>
+      <div class="legend">
+        <span><i class="sw flag-a"></i>Objectif A</span><span><i class="sw flag-b"></i>Objectif B</span>
+        <span><i class="sw dot" style="background:#2E9E4F"></i>Gardée</span><span><i class="sw dot" style="background:#F0A500"></i>À décider</span><span><i class="sw dot" style="background:#8A8F8C"></i>En attente</span><span><i class="sw dot" style="background:#C23A2B"></i>Refusée</span>
+        <span><i class="sw" style="background:#8E5BD6"></i>Challenge</span><span><i class="sw flag-c"></i>Objectif C</span><span><i class="sw" style="background:var(--card);border:1.5px solid var(--pois)"></i>Week-end choc</span>
       </div>
-      <div class="filters stats" role="group" aria-label="Statut des courses">
-        <button type="button" class="chipbtn stat" data-stat="tous" aria-pressed="true">Tous les statuts</button>
-        <button type="button" class="chipbtn stat" data-stat="Gardée" aria-pressed="false">Gardées</button>
-        <button type="button" class="chipbtn stat" data-stat="À décider" aria-pressed="false">À décider</button>
-        <button type="button" class="chipbtn stat" data-stat="En attente" aria-pressed="false">En attente</button>
-        <button type="button" class="chipbtn stat" data-stat="Refusée" aria-pressed="false">Refusées</button>
-      </div>
-      <div class="ctrl">
-        <label>Mois
-          <select class="select mois" aria-label="Mois">
-            <option value="">Toute la saison</option>
-            <option value="2026-10">octobre 2026</option><option value="2026-11">novembre 2026</option><option value="2026-12">décembre 2026</option>
-            <option value="2027-01">janvier 2027</option><option value="2027-02">février 2027</option><option value="2027-03">mars 2027</option>
-            <option value="2027-04">avril 2027</option><option value="2027-05">mai 2027</option><option value="2027-06">juin 2027</option>
-            <option value="2027-07">juillet 2027</option><option value="2027-08">août 2027</option><option value="2027-09">septembre 2027</option>
-            <option value="2027-10">octobre 2027</option>
-          </select>
-        </label>
-        <button type="button" class="chipbtn passe" aria-pressed="false">Afficher le passé</button>
-      </div>
-      <div class="sub">Ouvre une ligne pour lire son contenu (pour les objectifs A et B : parcours et stratégie de course).</div>
-      <div data-draw="cal"></div>
+    </section>
+    <section aria-labelledby="t-cal">
+      <div class="sec-h"><h2 id="t-cal">Calendrier des courses</h2><span class="sub">Semaine par semaine, avec les trous entre les courses</span></div>
+      <div class="cweeks" data-draw="cweeks"></div>
+    </section>
+    <section aria-labelledby="t-prep">
+      <div class="sec-h"><h2 id="t-prep">Objectifs de préparation</h2><span class="sub">Objectifs C et week-ends chocs</span></div>
+      <div class="cweeks" data-draw="cprep"></div>
     </section>
   </section>
 
@@ -192,15 +177,15 @@
   </details>
 </div>
 
-<script src="dash.js?v=20261119c"></script>
-<script src="base.js?v=20261119c"></script>
-<script src="meteo.js?v=20261119c"></script>
-<script src="calcs.js?v=20261119c"></script>
-<script src="calcs-jeu.js?v=20261119c"></script>
-<script src="saison.js?v=20261119c"></script>
-<script src="courses.js?v=20261119c"></script>
-<script src="rouler.js?v=20261119c"></script>
-<script src="forme.js?v=20261119c"></script>
-<script src="jeu.js?v=20261119c"></script>
+<script src="dash.js?v=20261119d"></script>
+<script src="base.js?v=20261119d"></script>
+<script src="meteo.js?v=20261119d"></script>
+<script src="calcs.js?v=20261119d"></script>
+<script src="calcs-jeu.js?v=20261119d"></script>
+<script src="saison.js?v=20261119d"></script>
+<script src="courses.js?v=20261119d"></script>
+<script src="rouler.js?v=20261119d"></script>
+<script src="forme.js?v=20261119d"></script>
+<script src="jeu.js?v=20261119d"></script>
 </body>
 </html>
