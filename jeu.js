@@ -1,20 +1,20 @@
-/* Page « Le jeu » : la route vers l'objectif A, le niveau, les médailles */
-window.jbGoal = 'A1';
+/* Page « Le jeu » : le circuit de la saison (le temps), le duel contre le plan (la charge), le niveau, les médailles */
 const JB_LEVELS = [
   [0, 'Cyclotouriste'], [1000, 'Randonneur'], [2500, 'Cyclosportif'], [5000, 'Rouleur'], [8000, 'Grimpeur'],
   [12000, 'Baroudeur'], [17000, 'Ultra'], [23000, 'Forçat de la route'], [30000, 'Légende']
 ];
 
+window.jbGoal = 'saison';
 dash.draw('game', (el) => {
   const g = dash.data('jeu'), t = dash.data('totaux');
-  if (J.wait(el, g, 'Préparation de la route…')) return;
+  if (J.wait(el, g, 'Préparation du circuit…')) return;
   el.replaceChildren();
-  if (!g.data.length) { el.appendChild(J.el('div', 'sub', 'Aucun objectif A daté dans Nolio : la route apparaîtra dès qu’il y en aura un.')); return; }
-  if (!g.data.some((x) => x.code === window.jbGoal)) window.jbGoal = (g.data.find((x) => !x.passe) || g.data[0]).code;
+  if (!g.data.length) { el.appendChild(J.el('div', 'sub', 'Aucune course datée dans Nolio : le circuit apparaîtra dès qu’il y en aura une.')); return; }
+  if (!g.data.some((x) => x.code === window.jbGoal)) window.jbGoal = g.data[0].code;
   const G = g.data.find((x) => x.code === window.jbGoal);
   const xp = t.status === 'ok' && t.data[0] ? t.data[0].tss : 0;
 
-  // En-tête : niveau et choix de l'objectif
+  // En-tête : niveau et choix du circuit
   const head = J.el('div', 'game-head');
   let li = 0; JB_LEVELS.forEach((l, i) => { if (xp >= l[0]) li = i; });
   const nxt = JB_LEVELS[li + 1];
@@ -25,17 +25,17 @@ dash.draw('game', (el) => {
   const xb = J.el('div', 'xpbar'); const xi = J.el('i'); xi.style.width = (nxt ? (xp - JB_LEVELS[li][0]) / (nxt[0] - JB_LEVELS[li][0]) * 100 : 100) + '%'; xb.appendChild(xi); lt.appendChild(xb);
   lvl.appendChild(lt); head.appendChild(lvl);
   const right = J.el('div');
-  const h = J.el('h2', null, 'Route vers ' + G.code + ' · ' + G.nom); h.style.fontSize = '24px'; right.appendChild(h);
-  const seg = J.el('div', 'seg'); seg.style.marginTop = '8px'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Objectif');
-  for (const o of g.data) { const b = J.el('button', null, o.code + ' · ' + J.dm(o.date)); b.type = 'button'; b.setAttribute('aria-pressed', String(o.code === G.code)); b.addEventListener('click', () => { window.jbGoal = o.code; dash.draw('game'); }); seg.appendChild(b); }
+  const h = J.el('h2', null, G.code === 'saison' ? 'Circuit de la saison' : 'Circuit vers ' + G.code + ' · ' + G.nom); h.style.fontSize = '24px'; right.appendChild(h);
+  const seg = J.el('div', 'seg'); seg.style.marginTop = '8px'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Circuit');
+  for (const o of g.data) { const b = J.el('button', null, o.code === 'saison' ? 'Jusqu’à la dernière course' : 'Jusqu’à ' + o.code); b.type = 'button'; b.setAttribute('aria-pressed', String(o.code === G.code)); b.addEventListener('click', () => { window.jbGoal = o.code; delete el.dataset.anim; dash.draw('game'); }); seg.appendChild(b); }
   right.appendChild(seg); head.appendChild(right);
   el.appendChild(head);
 
-  // La carte : route en lacets
+  // La carte : route en lacets, une boucle tous les ~2 mois
   const map = J.el('div', 'map'); el.appendChild(map);
   const W = Math.max(map.clientWidth || el.clientWidth || 320, 320);
-  const rows = W < 560 ? 6 : W < 860 ? 5 : 4;
-  const gap = W < 560 ? 104 : 118, r = gap / 2, mx = r + 22, top = 70, H = top + (rows - 1) * gap + 60;
+  const rows = Math.max(3, Math.min(W < 560 ? 10 : 7, Math.round(G.jours / (W < 560 ? 34 : 56))));
+  const gap = W < 560 ? 104 : 118, r = gap / 2, mx = r + 22, top = 70, H = top + (rows - 1) * gap + 64;
   let d = `M ${mx} ${top}`;
   for (let i = 0; i < rows; i++) {
     const y = top + i * gap, toRight = i % 2 === 0;
@@ -43,14 +43,13 @@ dash.draw('game', (el) => {
     d += ` L ${xEnd} ${y}`;
     if (i < rows - 1) d += ` A ${r} ${r} 0 0 ${toRight ? 1 : 0} ${xEnd} ${y + gap}`;
   }
-  const svg = d3.select(map).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Route de la saison jusqu’à ' + G.nom + ', avec les courses et les étapes sur le chemin');
-  // Courbes de niveau (décor de carte)
+  const svg = d3.select(map).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Circuit de la saison jusqu’à ' + G.nom + ', avec les courses et les étapes sur le chemin');
   const topo = svg.append('g').style('opacity', 0.5);
   [[0.18, 0.3], [0.72, 0.62], [0.45, 0.95]].forEach(([cx, cy], k) => { for (let j = 1; j <= 5; j++) topo.append('ellipse').attr('cx', cx * W).attr('cy', cy * H).attr('rx', j * (W < 560 ? 26 : 46) + k * 8).attr('ry', j * 20 + k * 4).style('fill', 'none').style('stroke', 'var(--line)').style('stroke-width', 1); });
   svg.append('path').attr('d', d).style('fill', 'none').style('stroke', 'var(--line)').style('stroke-width', 26).style('stroke-linecap', 'round');
   const road = svg.append('path').attr('d', d).style('fill', 'none').style('stroke', 'color-mix(in srgb, var(--ink) 78%, var(--paper))').style('stroke-width', 18).style('stroke-linecap', 'round');
   const len = road.node().getTotalLength();
-  const posReal = Math.min(1, G.reel / G.total), posPlan = Math.min(1, G.plan_auj / G.total);
+  const posReal = Math.min(1, G.fait / G.jours);
   svg.append('path').attr('d', d).style('fill', 'none').style('stroke', 'var(--jaune)').style('stroke-width', 18).style('stroke-linecap', 'round').style('stroke-dasharray', `${posReal * len} ${len}`);
   svg.append('path').attr('d', d).style('fill', 'none').style('stroke', '#fff').style('stroke-width', 1.6).style('stroke-dasharray', '7 9').style('opacity', 0.75);
   const at = (p) => road.node().getPointAtLength(Math.max(0, Math.min(1, p)) * len);
@@ -64,40 +63,56 @@ dash.draw('game', (el) => {
   const fin = svg.append('g').attr('transform', `translate(${p1.x - 6},${p1.y - 44})`);
   for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) fin.append('rect').attr('x', 6 + i * 6).attr('y', j * 6).attr('width', 6).attr('height', 6).style('fill', (i + j) % 2 ? 'var(--ink)' : 'var(--card)').style('stroke', 'var(--ink)').style('stroke-width', 0.5);
   fin.append('line').attr('x1', 6).attr('x2', 6).attr('y1', 0).attr('y2', 44).style('stroke', 'var(--ink)').style('stroke-width', 2);
-  svg.append('text').attr('class', 'node-l').attr('x', p1.x + (rows % 2 ? -22 : 22)).attr('y', W < 560 ? p1.y + 34 : p1.y - 30).attr('text-anchor', rows % 2 ? 'end' : 'start').style('font-size', '15px').text(G.code + ' · ' + G.nom + ' · ' + J.dm(G.date));
+  const finTxt = (G.arrivee === 'a' ? G.code + ' · ' : '') + G.nom.replace(/^Dernière course · /, '') + ' · ' + J.dm(G.date);
+  svg.append('text').attr('class', 'node-l').attr('x', p1.x + (rows % 2 ? -22 : 22)).attr('y', W < 560 ? p1.y + 34 : p1.y - 30).attr('text-anchor', rows % 2 ? 'end' : 'start').style('font-size', '15px').text(finTxt);
 
   // Étapes
   const nodes = JSON.parse(G.nodes || '[]');
-  const COL = { a: 'var(--jaune)', b: 'var(--vert)', c: 'var(--pois)', choc: 'var(--pois)', mineure: 'var(--card)', test: 'var(--card)' };
-  let lastLab = -1e9, flip = false;
+  const roadBoxes = [];
+  for (let i = 0; i < rows; i++) {
+    const y = top + i * gap;
+    roadBoxes.push({ x0: mx - 14, x1: W - mx + 14, y0: y - 13, y1: y + 13 });
+    if (i < rows - 1) roadBoxes.push(i % 2 === 0 ? { x0: W - mx, x1: W, y0: y, y1: y + gap } : { x0: 0, x1: mx, y0: y, y1: y + gap });
+  }
+  const boxes = roadBoxes.concat([p0, p1].map((p, i) => ({ x0: i ? (rows % 2 ? p.x - 280 : p.x - 10) : p.x - 10, x1: i ? (rows % 2 ? p.x + 10 : p.x + 280) : p.x + 120, y0: p.y - 50, y1: i && W < 560 ? p.y + 44 : p.y - 8 })));
+  const COL = { a: 'var(--jaune)', b: 'var(--vert)', c: 'var(--pois)', choc: 'var(--pois)', challenge: '#8E5BD6', mineure: 'var(--card)', test: 'var(--card)' };
+  const R_ = { a: 11, b: 8.5, c: 8.5, challenge: 9, mineure: 6.5, choc: 7 };
+  let flip = false;
   for (const n of nodes) {
-    const p = at(n.pos), passed = n.pos <= posReal;
+    const p = at(n.pos), passed = n.date < J.today;
     const g2 = svg.append('g').style('cursor', 'default');
-    const big = n.kind === 'a' || n.kind === 'b' || n.kind === 'c' || n.kind === 'choc';
+    const big = n.kind !== 'test';
     if (n.kind === 'test') g2.append('rect').attr('x', p.x - 4.5).attr('y', p.y - 4.5).attr('width', 9).attr('height', 9).attr('transform', `rotate(45 ${p.x} ${p.y})`).style('fill', 'var(--card)').style('stroke', 'var(--ink)').style('stroke-width', 1.5);
-    else g2.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', big ? (n.kind === 'a' ? 11 : 8.5) : 5).style('fill', COL[n.kind]).style('stroke', n.kind === 'choc' ? 'var(--pois)' : 'var(--ink)').style('stroke-width', n.kind === 'choc' ? 3 : 1.6);
-    if (n.kind === 'choc') g2.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', 3).style('fill', 'var(--card)');
-    if (big) g2.append('text').attr('x', p.x).attr('y', p.y + 4).attr('text-anchor', 'middle').style('font-size', n.kind === 'a' ? '11px' : '9px').style('font-weight', 700).style('fill', n.kind === 'a' ? '#3D3000' : '#fff').text(n.kind === 'choc' ? '' : n.code);
+    else g2.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', R_[n.kind]).style('fill', COL[n.kind]).style('stroke', n.kind === 'choc' ? 'var(--pois)' : 'var(--ink)').style('stroke-width', n.kind === 'choc' ? 3 : 1.6).style('stroke-dasharray', n.statut === 'Sélection requise' ? '3 2' : null);
+    if (n.kind === 'choc') g2.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', 2.5).style('fill', 'var(--card)');
+    if (n.code) g2.append('text').attr('x', p.x).attr('y', p.y + 4).attr('text-anchor', 'middle').style('font-size', n.kind === 'a' ? '11px' : '9px').style('font-weight', 700).style('fill', n.kind === 'a' ? '#3D3000' : '#fff').text(n.code);
     if (passed) g2.style('opacity', 0.55);
-    const dist = n.pos * len;
-    if (big && dist - lastLab > (W < 560 ? 70 : 92) && len - dist > (W < 560 ? 240 : 260)) {
-      flip = !flip; lastLab = dist;
-      const short = n.nom.replace(/^Week-end choc ([0-9]+).*$/, 'Choc $1').replace(/ \(prépa .*\)$/, '').replace(/^Championnats du monde UCI /, '');
-      const t1 = g2.append('text').attr('class', 'node-l').attr('y', flip ? p.y - 20 : p.y + 30).attr('text-anchor', 'middle').text(short.length > 24 ? short.slice(0, 23) + '…' : short);
-      const half = t1.node().getComputedTextLength() / 2 + 14, lx = Math.max(half, Math.min(W - half, p.x));
-      t1.attr('x', lx);
-      g2.append('text').attr('class', 'node-d').attr('x', lx).attr('y', flip ? p.y - 34 : p.y + 43).attr('text-anchor', 'middle').text(J.dm(n.date));
+    if (big) {
+      const short = n.nom.replace(/^Week-end choc ([0-9]+).*$/, 'Choc $1').replace(/^Week-end choc .*$/, 'Choc').replace(/ \(prépa .*\)$/, '').replace(/^Championnats du monde UCI /, '');
+      const txt = short.length > 24 ? short.slice(0, 23) + '…' : short;
+      // Étiquette au-dessus ou en dessous, seulement si elle ne chevauche rien
+      for (const up of (flip ? [false, true] : [true, false])) {
+        const t1 = g2.append('text').attr('class', 'node-l').attr('y', up ? p.y - 20 : p.y + 30).attr('text-anchor', 'middle').text(txt);
+        const half = t1.node().getComputedTextLength() / 2 + 6, lx = Math.max(half + 8, Math.min(W - half - 8, p.x));
+        t1.attr('x', lx);
+        const box = { x0: lx - half, x1: lx + half, y0: up ? p.y - 46 : p.y + 16, y1: up ? p.y - 14 : p.y + 48 };
+        if (!boxes.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0)) {
+          boxes.push(box);
+          g2.append('text').attr('class', 'node-d').attr('x', lx).attr('y', up ? p.y - 34 : p.y + 43).attr('text-anchor', 'middle').text(J.dm(n.date));
+          flip = up;
+          break;
+        }
+        t1.remove();
+      }
     }
-    const label = { a: 'Objectif ' + n.code, b: 'Objectif B', c: 'Objectif C', choc: 'Week-end choc', mineure: 'Course', test: 'Test' }[n.kind];
+    const label = { a: 'Objectif ' + n.code, b: 'Objectif B', c: 'Objectif C', choc: 'Week-end choc', mineure: 'Course gardée', challenge: 'Challenge', test: 'Test' }[n.kind];
     g2.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', 15).style('fill', 'transparent')
-      .on('pointerenter pointerdown', (ev) => show(ev, [n.nom, label + ' · ' + J.day(n.date) + ' · ' + J.jx(n.date), passed ? 'Étape passée' : 'Encore ' + J.num(Math.max(0, n.pos * G.total - G.reel)) + ' TSS pour l’atteindre']))
+      .on('pointerenter pointerdown', (ev) => show(ev, [n.nom, label + (n.statut && n.statut !== 'Gardée' ? ' · ' + n.statut : ''), J.day(n.date) + ' · ' + J.jx(n.date)]))
       .on('pointerleave', () => { tip.hidden = true; });
   }
 
-  // Le fantôme (le plan) et le cycliste (le réel)
-  const pg = at(posPlan), pr = at(posReal);
-  svg.append('g').attr('transform', `translate(${pg.x - 15},${pg.y - 30})`).style('opacity', 0.35).html(window.jbRiderSVG('var(--muted)'));
-  svg.append('text').attr('x', pg.x).attr('y', pg.y - 34).attr('text-anchor', 'middle').style('font-size', '11px').style('fill', 'var(--muted)').text('le plan');
+  // Le cycliste avance avec le temps
+  const pr = at(posReal);
   const me = svg.append('g').attr('transform', `translate(${pr.x - 15},${pr.y - 32})`);
   me.append('ellipse').attr('cx', 15).attr('cy', 30).attr('rx', 14).attr('ry', 3).style('fill', 'rgba(0,0,0,.25)');
   me.html(me.html() + window.jbRiderSVG());
@@ -110,13 +125,50 @@ dash.draw('game', (el) => {
   // Le bilan sous la carte
   const foot = J.el('div', 'map-foot');
   const item = (big, txt) => { const s = J.el('span'); s.append(J.el('b', null, big), document.createTextNode(' ' + txt)); foot.appendChild(s); };
-  item(Math.round(posReal * 100) + ' %', 'de la route faite (' + J.num(G.reel) + ' sur ' + J.num(G.total) + ' TSS)');
-  const delta = G.reel - G.plan_auj;
-  item((delta >= 0 ? '+' : '−') + J.num(Math.abs(delta)), 'TSS ' + (delta >= 0 ? 'd’avance' : 'de retard') + ' sur le plan');
-  const next = nodes.find((n) => n.pos > posReal && n.kind !== 'test' && n.kind !== 'mineure');
+  item('Jour ' + G.fait, 'sur ' + G.jours + ' (' + Math.round(posReal * 100) + ' % du circuit)');
+  const next = nodes.find((n) => n.date >= J.today && n.race);
   if (next) item(J.jx(next.date), 'avant ' + next.nom.replace(/ \(prépa .*\)$/, ''));
-  item(J.jx(G.date), 'avant ' + G.code);
+  item(J.jx(G.date), 'avant l’arrivée');
   el.appendChild(foot);
+});
+
+/* Duel contre le plan : ta charge contre celle que vise le plan */
+dash.draw('duel', (el) => {
+  const d = dash.data('duel');
+  if (J.wait(el, d)) return;
+  el.replaceChildren();
+  const x = d.data[0]; if (!x) return;
+  const top = J.el('div', 'sec-h');
+  top.append(J.el('h2', null, 'Duel contre le plan'), J.el('span', 'sub', 'Ta charge depuis la reprise contre celle que vise le plan à la même date'));
+  el.appendChild(top);
+  const max = Math.max(x.reel, x.plan, 1);
+  const lane = (name, val, col, rider) => {
+    const row = J.el('div', 'lane');
+    row.appendChild(J.el('div', 'lane-n', name));
+    const tr = J.el('div', 'lane-t'); const f = J.el('i'); f.style.width = (val / max * 100) + '%'; f.style.background = col; tr.appendChild(f);
+    if (rider) { const r = J.el('span', 'lane-r'); r.innerHTML = '<svg viewBox="0 0 30 24" width="30" height="24" aria-hidden="true">' + window.jbRiderSVG(rider) + '</svg>'; r.style.left = 'calc(' + (val / max * 100) + '% - 15px)'; tr.appendChild(r); }
+    row.appendChild(tr);
+    row.appendChild(J.el('div', 'lane-v', J.num(val) + ' TSS'));
+    el.appendChild(row);
+  };
+  lane('Toi', x.reel, 'var(--jaune)', 'var(--ink)');
+  lane('Le plan', x.plan, 'var(--muted)', 'var(--muted)');
+  const delta = x.reel - x.plan, pct = x.plan ? Math.round(delta / x.plan * 100) : 0;
+  const res = J.el('p', 'lede'); res.style.margin = '10px 0 0';
+  res.textContent = (delta >= 0 ? 'Tu mènes de ' : 'Le plan mène de ') + J.num(Math.abs(delta)) + ' TSS (' + (pct >= 0 ? '+' : '−') + Math.abs(pct) + ' %).';
+  el.appendChild(res);
+  const weeks = JSON.parse(x.semaines || '[]');
+  const h3 = J.el('h3', null, 'Semaines gagnées : ' + x.gagnees + ' sur ' + x.jouees); h3.style.marginTop = '14px'; el.appendChild(h3);
+  el.appendChild(J.el('div', 'sub', 'Une semaine est gagnée quand tu fais au moins 90 % de la charge visée.'));
+  const strip = J.el('div', 'wstrip');
+  for (const w of weeks) {
+    const c = J.el('span', w.encours ? 'now' : w.pct == null ? '' : w.pct >= 90 ? 'win' : w.pct >= 70 ? 'mid' : 'lose');
+    c.title = 'Semaine du ' + J.dm(w.lundi) + ' : ' + w.realise + ' / ' + w.cible + ' TSS' + (w.pct != null ? ' (' + w.pct + ' %)' : '') + (w.encours ? ', en cours' : '');
+    c.appendChild(J.el('b', null, w.pct != null ? w.pct + ' %' : '—'));
+    c.appendChild(J.el('small', null, J.dm(w.lundi)));
+    strip.appendChild(c);
+  }
+  el.appendChild(strip);
 });
 
 /* Médailles : un anneau à crans, un cran par palier */

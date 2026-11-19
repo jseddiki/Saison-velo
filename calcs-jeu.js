@@ -38,37 +38,60 @@ dash.calc('totaux', {
 });
 
 dash.calc('jeu', {
-  title: 'La route vers l’objectif',
-  description: 'Pour chaque objectif A : charge cumulée prévue par le plan (cible du mésocycle, sinon prévu) de la reprise jusqu’à la course, charge réalisée cumulée, et position des étapes (courses, C, week-ends chocs, tests) sur la route.',
-  inputs: ['semaines', 'objectifs', 'notes', 'prevu', 'charge', 'statuts'],
-  fn: (semaines, objectifs, notes, prevu, charge, statuts) => {
+  title: 'Le circuit de la saison',
+  description: 'Circuits de la reprise jusqu’à la dernière course de la saison, ou jusqu’à un objectif A. Le cycliste avance avec le temps (jours écoulés). Sur le chemin : objectifs A, B et C, courses gardées, challenges, week-ends chocs et tests.',
+  inputs: ['objectifs', 'notes', 'prevu', 'statuts'],
+  fn: (objectifs, notes, prevu, statuts) => {
     const tag = {}; for (const s of statuts) tag[s.id] = s.nom;
-    const plan = {}; for (const w of semaines) plan[w.lundi] = w.cible != null ? w.cible : w.prevu;
-    const cum = (date) => { let t = 0; for (const w of semaines) { if (w.lundi > date) break; const end = J.add(w.lundi, 6); t += (plan[w.lundi] || 0) * (date >= end ? 1 : (J.diff(w.lundi, date) + 1) / 7); } return t; };
-    const real = Math.round(charge.filter((r) => r.date >= J.S0 && r.date <= J.today).reduce((a, r) => a + (Number(r.tss) || 0), 0));
-    const goals = objectifs.filter((o) => o.type === 'a' && /^A[0-9]$/.test(o.code || '')).sort((a, b) => (a.date < b.date ? -1 : 1));
-    const out = [];
-    for (const g of goals) {
-      const total = cum(J.add(g.date, -1)); if (!total) continue;
-      const nodes = [];
-      const push = (date, nom, kind, extra) => { if (date < J.S0 || date > g.date) return; nodes.push(Object.assign({ date, nom, kind, pos: Math.min(1, cum(J.add(date, -1)) / total) }, extra || {})); };
-      for (const o of objectifs) {
-        const st = tag[o.etiquette] || '';
-        if (o.id === g.id) continue;
-        if (o.type === 'a') push(o.date, o.nom, 'a', { code: o.code });
-        else if (o.type === 'b') push(o.date, o.nom, 'b', { code: 'B' });
-        else if (o.code === 'C') push(o.date, o.nom, 'c', { code: 'C' });
-        else if (st === 'Gardée') push(o.date, o.nom, 'mineure');
-      }
-      for (const n of notes) {
-        if (n.type === 'goal' || /^C · /.test(n.nom || '')) push(n.debut, String(n.nom).replace(/^C · /, ''), 'c', { code: 'C' });
-        else if (/^Week-end choc/i.test(n.nom || '')) push(n.debut, String(n.nom).replace(/^Week-end choc[ ]*·?[ ]*/, 'Week-end choc '), 'choc');
-      }
-      for (const p of prevu) if (/TST-|^Test/i.test(p.nom || '')) push(p.date, String(p.nom).replace(/ \(TST-[0-9]+\)/, ''), 'test');
-      nodes.sort((a, b) => (a.date < b.date ? -1 : 1));
-      out.push({ code: g.code, nom: g.nom, date: g.date, total: Math.round(total), plan_auj: Math.round(Math.min(cum(J.today), total)), reel: real, nodes: JSON.stringify(nodes), passe: g.date < J.today ? 'oui' : '' });
+    const all = [];
+    for (const o of objectifs) {
+      const st = tag[o.etiquette] || '';
+      if (st === 'Refusée') continue;
+      const h = String(o.entete || '').toUpperCase();
+      if (o.type === 'a') all.push({ date: o.date, nom: o.nom, kind: 'a', code: o.code || 'A', statut: st, race: 1 });
+      else if (o.type === 'b') all.push({ date: o.date, nom: o.nom, kind: 'b', code: 'B', statut: st, race: 1 });
+      else if (o.code === 'C') all.push({ date: o.date, nom: o.nom, kind: 'c', code: 'C', statut: st, race: 1 });
+      else if (h.startsWith('CHALLENGE')) all.push({ date: o.date, nom: o.nom, kind: 'challenge', code: '★', statut: st, race: 1 });
+      else if (st === 'Gardée') all.push({ date: o.date, nom: o.nom, kind: 'mineure', code: '', statut: st, race: 1 });
     }
-    return out;
+    for (const n of notes) {
+      if (n.type === 'goal' || /^C · /.test(n.nom || '')) all.push({ date: n.debut, nom: String(n.nom).replace(/^C · /, ''), kind: 'c', code: 'C', race: 1 });
+      else if (/^Week-end choc/i.test(n.nom || '')) all.push({ date: n.debut, nom: n.nom, kind: 'choc', code: '' });
+    }
+    for (const p of prevu) if (/TST-|^Test/i.test(p.nom || '')) all.push({ date: p.date, nom: String(p.nom).replace(/ \(TST-[0-9]+\)/, ''), kind: 'test', code: '' });
+    const inSeason = all.filter((n) => n.date >= J.S0 && n.date <= J.S1).sort((a, b) => (a.date < b.date ? -1 : 1));
+    const races = inSeason.filter((n) => n.race);
+    const routes = [];
+    const make = (code, nom, fin, finale) => {
+      const total = J.diff(J.S0, fin); if (total <= 0) return;
+      const nodes = inSeason.filter((n) => n.date <= fin && n !== finale).map((n) => Object.assign({}, n, { pos: J.diff(J.S0, n.date) / total }));
+      routes.push({ code, nom, date: fin, jours: total, fait: Math.max(0, Math.min(total, J.diff(J.S0, J.today))), nodes: JSON.stringify(nodes), arrivee: finale ? finale.kind : '' });
+    };
+    const last = races[races.length - 1];
+    if (last) make('saison', 'Dernière course · ' + last.nom, last.date, last);
+    for (const g of races.filter((n) => n.kind === 'a').sort((a, b) => (a.date < b.date ? -1 : 1))) make(g.code, g.nom, g.date, g);
+    return routes;
+  }
+});
+
+dash.calc('duel', {
+  title: 'Duel contre le plan',
+  description: 'Charge réalisée cumulée depuis la reprise contre la charge visée par le plan (cible du mésocycle, sinon prévu) à la même date, et bilan semaine par semaine : gagnée à 90 % de la cible ou plus.',
+  inputs: ['semaines', 'charge'],
+  fn: (semaines, charge) => {
+    const cur = J.mon(J.today);
+    let plan = 0;
+    const weeks = [];
+    for (const w of semaines) {
+      if (w.lundi > J.today) break;
+      const target = w.cible != null ? w.cible : w.prevu;
+      const part = w.lundi === cur ? (J.diff(w.lundi, J.today) + 1) / 7 : 1;
+      plan += (target || 0) * part;
+      weeks.push({ lundi: w.lundi, cible: target || 0, realise: w.realise, pct: target ? Math.round(w.realise / target * 100) : null, encours: w.lundi === cur ? 'oui' : '' });
+    }
+    const real = Math.round(charge.filter((r) => r.date >= J.S0 && r.date <= J.today).reduce((a, r) => a + (Number(r.tss) || 0), 0));
+    const done = weeks.filter((w) => !w.encours && w.cible);
+    return [{ reel: real, plan: Math.round(plan), gagnees: done.filter((w) => w.pct >= 90).length, jouees: done.length, semaines: JSON.stringify(weeks) }];
   }
 });
 
