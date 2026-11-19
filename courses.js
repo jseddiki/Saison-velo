@@ -31,7 +31,8 @@ dash.calc('evenements', {
 /* Filtres */
 const JB_STATUTS = ['Gardée', 'À décider', 'En attente', 'Sélection requise', 'Refusée'];
 const JB_TYPES = [['ab', 'Objectifs A et B'], ['course', 'Autres courses'], ['challenge', 'Challenges'], ['choc', 'Week-ends chocs'], ['prep', 'Objectifs de préparation'], ['meso', 'Mésocycles']];
-window.jbF = window.jbF || { statuts: new Set(['Gardée', 'À décider', 'En attente', 'Sélection requise']), types: new Set(JB_TYPES.map((t) => t[0])), passe: false };
+window.jbF = window.jbF || { statuts: new Set(['Gardée', 'À décider', 'En attente', 'Sélection requise']), types: new Set(JB_TYPES.map((t) => t[0])), passe: false, vue: 'saison' };
+if (!window.jbF.vue) window.jbF.vue = 'saison';
 
 const jbVisible = (e) => {
   const F = window.jbF;
@@ -59,11 +60,93 @@ dash.draw('cfilters', (el) => {
 });
 
 /* La saison en un coup d'œil : trois lignes (objectifs, courses, préparation) et les trous */
+/* Choix de la vue : toute la saison, ou les compétitions seulement */
+dash.draw('cvue', (el) => {
+  el.replaceChildren();
+  const seg = J.el('div', 'seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Vue');
+  for (const [k, l] of [['saison', 'Toute la saison'], ['compet', 'Compétitions seulement']]) {
+    const b = J.el('button', null, l); b.type = 'button'; b.setAttribute('aria-pressed', String(window.jbF.vue === k));
+    b.addEventListener('click', () => { window.jbF.vue = k; dash.draw('cvue'); dash.draw('cstrip'); });
+    seg.appendChild(b);
+  }
+  el.appendChild(seg);
+});
+
+/* Vue « compétitions seulement » : une ligne par genre de course, avec le nom de chaque course */
+const jbStripCompet = (el, d) => {
+  const F = window.jbF;
+  const mc = dash.data('macros');
+  const comp = mc.status === 'ok' ? mc.data.filter((m) => /comp[ée]tition/i.test(m.nom)) : [];
+  let from = comp.length ? comp[0].debut : J.S0, to = comp.length ? comp[comp.length - 1].fin : J.S1;
+  if (!F.passe && J.today > from) from = J.mon(J.today);
+  const ev = d.data.filter((e) => jbRaceKind(e) && jbVisible(e) && e.debut >= from && e.debut <= to);
+  const LANES = [['A', (e) => /^A/.test(e.role)], ['B', (e) => e.role === 'B'], ['C', (e) => e.kind === 'course' && /^C/.test(e.role)], ['Courses', (e) => e.kind === 'course' && !/^C/.test(e.role)], ['Challenges', (e) => e.kind === 'challenge']];
+  const W = Math.max(el.clientWidth, 1180), L = 92, R = 16, top = 28, rowH = 18, padL = 10;
+  const P = (s) => new Date(s + 'T12:00:00Z');
+  const x = d3.scaleUtc().domain([P(from), P(J.add(to, 1))]).range([L, W - R]);
+  // mesure des noms puis rangement en sous-lignes sans chevauchement
+  const meas = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); meas.style.position = 'absolute'; meas.style.visibility = 'hidden'; el.appendChild(meas);
+  const tm = document.createElementNS('http://www.w3.org/2000/svg', 'text'); tm.setAttribute('class', 'race-n'); meas.appendChild(tm);
+  const widthOf = (t) => { tm.textContent = t; return tm.getComputedTextLength(); };
+  const lanes = [];
+  let y = top;
+  for (const [name, test] of LANES) {
+    const items = ev.filter(test).sort((a, b) => (a.debut < b.debut ? -1 : 1));
+    if (!items.length) continue;
+    const ends = [];
+    const placed = items.map((e) => {
+      const x0 = x(P(e.debut)), label = e.nom, w = widthOf(label) + 16;
+      let r = ends.findIndex((end) => end < x0 - 4); if (r < 0) { r = ends.length; ends.push(0); }
+      ends[r] = x0 + w;
+      return { e, x0, r, label, w };
+    });
+    const h = Math.max(1, ends.length) * rowH + padL;
+    lanes.push({ name, y, h, placed });
+    y += h + 8;
+  }
+  meas.remove();
+  const H = y + 6;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Compétitions de la saison, une ligne par genre de course, avec leur nom');
+  const tip = J.el('div', 'tip'); tip.hidden = true;
+  const show = (e2, lines) => { tip.replaceChildren(J.el('b', null, lines[0])); for (const l of lines.slice(1)) tip.appendChild(J.el('div', null, l)); J.tipAt(tip, el, e2, 230); };
+  const hide = () => { tip.hidden = true; };
+  // semaines et mois
+  const weeks = d3.utcMonday.range(P(from), P(J.add(to, 1)));
+  svg.selectAll('line.w').data(weeks).join('line').attr('x1', (w) => x(w)).attr('x2', (w) => x(w)).attr('y1', top - 6).attr('y2', H - 4).style('stroke', 'var(--line)').style('opacity', 0.45);
+  const months = d3.utcMonth.range(d3.utcMonth.ceil(P(from)), P(J.add(to, 1)));
+  svg.selectAll('line.m').data(months).join('line').attr('x1', (m) => x(m)).attr('x2', (m) => x(m)).attr('y1', 6).attr('y2', H - 4).style('stroke', 'var(--muted)').style('stroke-dasharray', '2 4');
+  svg.selectAll('text.m').data(months).join('text').attr('x', (m) => x(m) + 4).attr('y', 14).attr('class', 'month-l').text((m) => m.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' }));
+  // macrocycles de compétition en fond
+  comp.forEach((m, i) => { if (m.fin < from) return; const x0 = x(P(m.debut < from ? from : m.debut)); svg.append('text').attr('x', x0 + 4).attr('y', H - 6).attr('class', 'macro-l').text('Macro ' + m.num); });
+  for (const ln of lanes) {
+    svg.append('rect').attr('x', L - 4).attr('y', ln.y).attr('width', W - L - R + 8).attr('height', ln.h).attr('rx', 6).style('fill', 'var(--soft)').style('opacity', 0.6);
+    svg.append('text').attr('x', 6).attr('y', ln.y + 16).attr('class', 'lane-l').text(ln.name);
+    for (const p of ln.placed) {
+      const e = p.e, cy2 = ln.y + 6 + p.r * rowH + rowH / 2;
+      const g = svg.append('g').style('cursor', 'pointer');
+      const fill = /^A/.test(e.role) ? 'var(--jaune)' : e.role === 'B' ? 'var(--vert)' : e.kind === 'challenge' ? '#8E5BD6' : e.couleur || 'var(--muted)';
+      if (e.kind === 'challenge') g.append('path').attr('d', d3.symbol(d3.symbolStar, 70)()).attr('transform', `translate(${p.x0},${cy2})`).style('fill', fill).style('stroke', 'var(--ink)').style('stroke-width', 0.8);
+      else g.append('circle').attr('cx', p.x0).attr('cy', cy2).attr('r', 5).style('fill', fill).style('stroke', e.statut === 'Sélection requise' ? 'var(--ink)' : 'var(--card)').style('stroke-width', 1.5).style('stroke-dasharray', e.statut === 'Sélection requise' ? '2 2' : null);
+      g.append('text').attr('x', p.x0 + 9).attr('y', cy2 + 4).attr('class', 'race-n' + (e.statut === 'Refusée' ? ' refused' : '') + (e.debut < J.today ? ' past' : '')).text(p.label);
+      g.append('rect').attr('x', p.x0 - 6).attr('y', cy2 - 8).attr('width', p.w).attr('height', 16).style('fill', 'transparent')
+        .on('pointerenter pointerdown', (e2) => show(e2, [e.nom, (e.role ? e.role + ' · ' : '') + J.day(e.debut) + ' · ' + J.jx(e.debut), [e.km ? J.num(e.km) + ' km' : '', e.dplus ? J.num(e.dplus) + ' m D+' : ''].filter(Boolean).join(' · '), e.statut].filter(Boolean)))
+        .on('pointerleave', hide)
+        .on('click', () => { const t2 = document.getElementById('ev-' + e.id); if (t2) { t2.open = true; t2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
+    }
+  }
+  if (!lanes.length) svg.append('text').attr('x', L).attr('y', top + 16).text('Aucune compétition avec ces filtres.');
+  const tx = x(P(J.today));
+  if (tx >= L && tx <= W - R) svg.append('line').attr('x1', tx).attr('x2', tx).attr('y1', 6).attr('y2', H - 4).style('stroke', 'var(--ink)').style('stroke-width', 1.5);
+  el.appendChild(tip);
+};
+
 dash.draw('cstrip', (el) => {
   const d = dash.data('evenements'), cy = dash.data('cycles');
   if (J.wait(el, d)) return;
   el.textContent = '';
   const F = window.jbF;
+  el.classList.toggle('compet', F.vue === 'compet');
+  if (F.vue === 'compet') { jbStripCompet(el, d); return; }
   const from = F.passe ? J.S0 : J.mon(J.today);
   const ev = d.data.filter((e) => jbVisible(e) && (e.fin || e.debut) >= from);
   const W = Math.max(el.clientWidth, 900), L = 92, R = 14, H = 196;
