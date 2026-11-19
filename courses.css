@@ -67,7 +67,7 @@
   .bib-name { font-size: 13px; }
   .bib-date { font-size: 11.5px; }
 }
-.strip.compet { min-width: 1180px; }
+.strip.compet { min-width: 1500px; }
 .strip .race-n { font-family: var(--f-body); font-size: 12px; font-weight: 500; fill: var(--ink); }
 .strip .race-n.past { fill: var(--muted); }
 .strip .race-n.refused { fill: var(--muted); text-decoration: line-through; }
