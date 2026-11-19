@@ -3,25 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saison 2026-2027 · Johan</title>
+<title>Saison 2027</title>
 <meta name="description" content="La saison vélo de Johan : courses prévues, séances à partager, forme et progression.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261119b">
+<link rel="stylesheet" href="style.css?v=20261119c">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1 class="brand">Johan, saison 2026-27<small>Route et ultra, depuis Augsburg</small></h1>
+    <h1 class="brand">Saison 2027</h1>
     <div class="maj" id="maj">Chargement des données…</div>
   </header>
 
   <nav class="nav" aria-label="Pages">
     <button type="button" class="tab" data-page="saison" aria-pressed="true">Ma saison</button>
     <button type="button" class="tab" data-page="courses" aria-pressed="false">Courses</button>
-    <button type="button" class="tab" data-page="rouler" aria-pressed="false">Rouler ensemble</button>
+    <button type="button" class="tab" data-page="rouler" aria-pressed="false">Entraînement</button>
     <button type="button" class="tab" data-page="forme" aria-pressed="false">Forme</button>
     <button type="button" class="tab" data-page="jeu" aria-pressed="false">Le jeu</button>
   </nav>
@@ -38,6 +38,8 @@
         <span><i class="sw flag-a"></i>Objectif A</span>
         <span><i class="sw flag-b"></i>Objectif B</span>
         <span><i class="sw flag-c"></i>Objectif C et week-end choc</span>
+        <span><i class="sw" style="background:#8E5BD6"></i>Challenge</span>
+        <span><i class="sw" style="background:var(--card);border:1.5px solid var(--ink)"></i>Course gardée</span>
         <span><i class="sw dot" style="background:var(--muted)"></i>Test</span>
       </div>
     </section>
@@ -47,19 +49,6 @@
       <div class="signs" data-draw="signs"></div>
     </section>
 
-    <section aria-labelledby="t-obj">
-      <div class="sec-h"><h2 id="t-obj">Compte à rebours</h2></div>
-      <div class="bibs" data-draw="bibs"></div>
-    </section>
-
-    <section aria-labelledby="t-14">
-      <div class="sec-h"><h2 id="t-14">Les 14 prochains jours</h2><span class="sub">Séances prévues, courses et indisponibilités</span></div>
-      <div data-draw="days14"></div>
-    </section>
-
-    <section class="card" aria-labelledby="t-bloc">
-      <div data-draw="bloc"></div>
-    </section>
 
     <section class="card" aria-labelledby="t-charge">
       <div class="sec-h"><h2 id="t-charge">Charge par semaine</h2>
@@ -75,6 +64,16 @@
       <div class="sub" data-draw="wtitle"></div>
       <div class="chart" data-draw="weeks"></div>
     </section>
+
+    <section aria-labelledby="t-14">
+      <div class="sec-h"><h2 id="t-14">Les 7 prochains jours</h2><span class="sub">Séances prévues, courses et indisponibilités</span></div>
+      <div data-draw="days14"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-bloc">
+      <div data-draw="bloc"></div>
+    </section>
+
   </section>
 
   <!-- ================= COURSES ================= -->
@@ -83,6 +82,10 @@
       <div class="sec-h"><h2>Les courses de la saison</h2></div>
       <p class="lede">Les courses où je vais cette saison. Tu veux en faire une avec moi ? Ajoute-la à ton agenda et dis-le-moi.</p>
     </div>
+    <section aria-labelledby="t-obj">
+      <div class="sec-h"><h2 id="t-obj">Compte à rebours</h2></div>
+      <div class="bibs" data-draw="bibs"></div>
+    </section>
     <section aria-label="Prochaines courses retenues"><div class="highlight" data-draw="nextraces"></div></section>
     <section class="card flat">
       <div class="filters" role="group" aria-label="Afficher">
@@ -122,9 +125,8 @@
   <!-- ================= ROULER ENSEMBLE ================= -->
   <section class="page" id="rouler" hidden>
     <div>
-      <div class="sec-h"><h2>Rouler ensemble</h2></div>
-      <p class="lede">Mes séances des 14 prochains jours. Une te tente ? Dis-le-moi, ou télécharge-la pour la faire de ton côté. La météo est celle d'Augsburg.</p>
-      <p class="sub">Intensités en % de CP (Z1 sous 55 %, Z2 55-75 %, Z3 75-90 %, Z4 90-105 %, Z5 et plus au-delà). Le fichier .fit garde ces % : sur un Garmin, ils s'appliquent à la FTP réglée sur ton compteur. Sur un Edge, copie-le par câble dans le dossier Garmin/NewFiles. Le profil détaillé arrive 7 jours avant la séance.</p>
+      <div class="sec-h"><h2>Entraînement</h2><span class="sub">Les 14 prochains jours</span></div>
+      <p class="sub">Intensités en watts. Le fichier .fit les convertit en % de FTP : sur un Garmin, elles s'appliquent à la FTP réglée sur ton compteur. Sur un Edge, copie-le par câble dans le dossier Garmin/NewFiles. Le profil détaillé arrive 7 jours avant la séance.</p>
     </div>
     <div class="sessions" data-draw="next14"></div>
     <section>
@@ -172,6 +174,7 @@
     <section class="card game-hero">
       <div data-draw="game"></div>
     </section>
+    <section class="card" data-draw="duel"></section>
     <section>
       <div class="sec-h"><h2>Médailles</h2><span class="sub">Chaque palier atteint allume un cran de la médaille</span></div>
       <div class="medals" data-draw="medals"></div>
@@ -185,19 +188,19 @@
     <p>Prévu : somme des TSS des séances prévues de la semaine (lundi au dimanche). Réalisé : charge du jour calculée par Nolio, renfo compris. Cible : la charge écrite pour chaque semaine dans la description du cycle.</p>
     <p>W moyen et FC moyenne : moyennes des tours de la séance, puissance hors arrêts. Zones : temps par zone calculé par Nolio.</p>
     <p>Saison : du 26/10/2026 (début de la préparation générale) au 31/10/2027 (fin du challenge et plaisir). Km et D+ : vélo, route et home trainer. Les séances importées de Strava n'ont pas de données (conditions de Strava).</p>
-    <p>Le jeu : chaque TSS réalisé fait avancer le cycliste sur la route ; le fantôme montre où le plan te place aujourd'hui.</p>
+    <p>Le jeu : le cycliste avance d'un jour à chaque jour de la saison. Le duel compare ta charge réalisée à celle que vise le plan ; le niveau monte avec ta charge totale (1 TSS = 1 point).</p>
   </details>
 </div>
 
-<script src="dash.js?v=20261119b"></script>
-<script src="base.js?v=20261119b"></script>
-<script src="meteo.js?v=20261119b"></script>
-<script src="calcs.js?v=20261119b"></script>
-<script src="calcs-jeu.js?v=20261119b"></script>
-<script src="saison.js?v=20261119b"></script>
-<script src="courses.js?v=20261119b"></script>
-<script src="rouler.js?v=20261119b"></script>
-<script src="forme.js?v=20261119b"></script>
-<script src="jeu.js?v=20261119b"></script>
+<script src="dash.js?v=20261119c"></script>
+<script src="base.js?v=20261119c"></script>
+<script src="meteo.js?v=20261119c"></script>
+<script src="calcs.js?v=20261119c"></script>
+<script src="calcs-jeu.js?v=20261119c"></script>
+<script src="saison.js?v=20261119c"></script>
+<script src="courses.js?v=20261119c"></script>
+<script src="rouler.js?v=20261119c"></script>
+<script src="forme.js?v=20261119c"></script>
+<script src="jeu.js?v=20261119c"></script>
 </body>
 </html>
