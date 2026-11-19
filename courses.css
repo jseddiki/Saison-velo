@@ -1,0 +1,69 @@
+/* Page « Courses » : vue d'ensemble, filtres, calendrier semaine par semaine */
+.fl-row { display: grid; grid-template-columns: 78px 1fr; gap: 8px; align-items: start; }
+.fl-row + .fl-row { margin-top: 4px; }
+.fl-l { font-size: 13px; color: var(--muted); padding-top: 10px; }
+.chipbtn .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.chipbtn[aria-pressed="false"] { opacity: .75; }
+.strip-card { padding: 16px 0 12px; overflow: hidden; }
+.strip-card .sec-h, .strip-card .legend { padding: 0 18px; }
+.strip-scroll { overflow-x: auto; }
+.strip { position: relative; min-width: 900px; }
+.strip svg text { font-family: var(--f-body); font-size: 12px; fill: var(--muted); }
+.strip .lane-l { font-family: var(--f-cond); font-weight: 600; font-size: 14px; fill: var(--ink); }
+.strip .meso-l { fill: #fff; font-family: var(--f-cond); font-weight: 700; font-size: 11px; }
+.strip .dot-l { font-family: var(--f-cond); font-weight: 700; font-size: 10px; fill: #15202B; }
+.strip .race-l { font-family: var(--f-cond); font-weight: 600; font-size: 13px; fill: var(--ink); }
+.strip .gap-l { font-family: var(--f-cond); font-weight: 600; font-size: 13px; fill: var(--warn); }
+.sw.dot { border-radius: 50%; }
+
+.cweeks { display: flex; flex-direction: column; gap: 8px; }
+.meso-div { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin: 14px 0 2px; padding-left: 10px; border-left: 6px solid var(--mc); }
+.meso-div b { font-family: var(--f-cond); font-size: 19px; }
+.meso-div span { font-size: 13px; color: var(--muted); }
+.meso-div.in-gap { margin: 2px 0; }
+.meso-div.in-gap b { font-size: 15px; color: var(--ink); }
+.wk { display: grid; grid-template-columns: 112px 1fr; gap: 12px; background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--mc, var(--line)); border-radius: var(--r-md); padding: 10px 12px; }
+.wk.now { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.wk-h b { display: block; font-family: var(--f-cond); font-size: 17px; }
+.wk-h span { font-size: 12px; color: var(--muted); }
+.wk-l { display: flex; flex-direction: column; gap: 6px; }
+.gap { border: 1.5px dashed var(--line); border-radius: var(--r-md); padding: 8px 12px; color: var(--muted); }
+.gap-h { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.gap-h b { font-family: var(--f-cond); font-size: 16px; }
+.gap-h span { font-size: 13px; }
+.gap .wk-l { margin-top: 6px; }
+.gap.big { border-color: var(--warn); background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--warn) 7%, transparent) 0 8px, transparent 8px 16px); }
+.gap.big .gap-h b { color: var(--warn); }
+.ci { border-radius: 8px; background: var(--soft); border-left: 4px solid var(--muted); }
+.gap .ci { background: var(--card); }
+.ci.r-a { border-left-color: var(--jaune); background: color-mix(in srgb, var(--jaune) 16%, var(--card)); }
+.ci.r-b { border-left-color: var(--vert); }
+.ci.r-c, .ci.r-choc { border-left-color: var(--pois); }
+.ci.r-ch { border-left-color: #8E5BD6; }
+.ci.refused .ci-n { text-decoration: line-through; color: var(--muted); }
+.ci.past { opacity: .6; }
+.ci > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 112px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; }
+.ci > summary::-webkit-details-marker { display: none; }
+.ci-d { font-size: 13px; color: var(--muted); text-transform: capitalize; font-variant-numeric: tabular-nums; }
+.ci-n { font-weight: 600; }
+.ci-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 3px; font-size: 12.5px; color: var(--muted); }
+.ci-m { display: block; }
+.ci-j { font-family: var(--f-cond); font-weight: 600; font-size: 16px; color: var(--muted); white-space: nowrap; }
+.ci-b { padding: 0 10px 10px; }
+.ci-b .ev-text { margin-top: 8px; }
+.tag.ch { color: #8E5BD6; border-color: #8E5BD6; }
+@media (max-width: 760px) {
+  .wk { grid-template-columns: 1fr; gap: 6px; }
+  .wk-h { display: flex; gap: 8px; align-items: baseline; }
+  .ci > summary { grid-template-columns: 1fr auto; }
+  .ci-d { grid-column: 1 / -1; }
+  .fl-row { grid-template-columns: 1fr; gap: 0; }
+  .fl-l { padding-top: 4px; }
+}
+@media (max-width: 760px) {
+  .bibs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .bib { padding: 12px 8px 12px; }
+  .bib-num { font-size: 38px; }
+  .bib-name { font-size: 13px; }
+  .bib-date { font-size: 11.5px; }
+}
