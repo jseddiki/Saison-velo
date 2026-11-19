@@ -74,12 +74,12 @@ dash.calc('jeu', {
 
 dash.calc('medailles', {
   title: 'Médailles',
-  description: 'Quêtes et médailles : métriques (PMA, CP, W/kg, glucides, sudation), volume de la saison (km, D+, muscu), sortie la plus longue, régularité des semaines, records battus, mesures VFC.',
-  inputs: ['quetes', 'reel', 'semaines', 'profil', 'vfc', 'wkg'],
-  fn: (quetes, reel, semaines, profil, vfc, wkg) => {
+  description: 'Quêtes et médailles : métriques (PMA, CP, W/kg, glucides, sudation), volume de la saison (km, D+, muscu), sortie la plus longue, régularité des semaines, records battus, mesures VFC, nutrition (sorties nourries, meilleur débit).',
+  inputs: ['quetes', 'reel', 'semaines', 'profil', 'vfc', 'wkg', 'glucides'],
+  fn: (quetes, reel, semaines, profil, vfc, wkg, glucides) => {
+    const gluc = glucides.filter((r) => r.valeur != null && r.date >= J.S0).map((r) => Number(r.valeur));
     const season = reel.filter((r) => r.date >= J.S0 && r.date <= J.today && J.bike(r.sport));
     const longH = season.reduce((a, r) => Math.max(a, (Number(r.duree_s) || 0) / 3600), 0);
-    const longKm = season.reduce((a, r) => Math.max(a, Number(r.km) || 0), 0);
     const cur = J.mon(J.today);
     let streak = 0, best = 0, run = 0;
     for (const w of semaines) {
@@ -94,7 +94,8 @@ dash.calc('medailles', {
     const extra = [
       { id: 'wkg', titre: 'CP en W/kg', unite: 'W/kg', paliers: [4, 4.25, 4.5, 4.75, 5, 5.25], valeur: lastW, dec: 2, note: '' },
       { id: 'long', titre: 'Sortie la plus longue', unite: 'h', paliers: [3, 5, 8, 12, 18, 24], valeur: longH ? Math.round(longH * 10) / 10 : null, dec: 1, note: 'Cette saison, à vélo' },
-      { id: 'loin', titre: 'Sortie la plus lointaine', unite: 'km', paliers: [100, 150, 200, 300, 400, 600, 1000], valeur: longKm ? Math.round(longKm) : null, note: 'Cette saison, à vélo' },
+      { id: 'nourries', titre: 'Sorties nourries à 60 g/h ou plus', unite: 'sorties', paliers: [1, 5, 10, 20, 40], valeur: gluc.length ? gluc.filter((v) => v >= 60).length : null, note: gluc.length ? '' : 'Pas encore de valeur : l’analyse du soir la remplit après chaque sortie.' },
+      { id: 'debit', titre: 'Meilleur débit de glucides sur une sortie', unite: 'g/h', paliers: [60, 70, 80, 90, 100, 110], valeur: gluc.length ? Math.max(...gluc) : null, note: gluc.length ? 'Objectif de course : 90 g/h' : 'Pas encore de valeur : l’analyse du soir la remplit après chaque sortie.' },
       { id: 'regul', titre: 'Semaines tenues d’affilée', unite: 'sem.', paliers: [2, 4, 6, 8, 12, 16], valeur: streak, note: 'Semaine tenue : au moins 90 % de la charge visée. Meilleure série : ' + best + ' sem.' },
       { id: 'records', titre: 'Records de la saison passée égalés', unite: 'sur 7', paliers: [1, 2, 3, 4, 5, 6, 7], valeur: beaten, note: 'Durées de 5 s à 3 h où tu fais déjà mieux que la saison passée' },
       { id: 'vfc', titre: 'Matins mesurés (VFC)', unite: 'mesures', paliers: [7, 30, 60, 100, 200], valeur: vfc.filter((r) => r.date >= J.S0 && r.rmssd != null).length, note: '' }
