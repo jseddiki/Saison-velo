@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saison 2026-2027 · Johan</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+.jb { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+.jb-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; }
+.jb h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0 0 var(--cds-gap-sm); }
+.jb h3 { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); margin: 0 0 4px; }
+.jb-page { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.jb-nav { display: flex; gap: 4px; overflow-x: auto; position: sticky; top: 0; z-index: 3; background: var(--color-bg); padding: 4px 0; }
+.jb-nav button { font: inherit; font-size: var(--cds-font-size-caption); padding: 8px 12px; border-radius: 16px; border: 1px solid var(--color-border-line); background: transparent; color: var(--color-fg-muted); cursor: pointer; white-space: nowrap; }
+.jb-nav button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); border-color: var(--color-fg); }
+.jb-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); }
+.jb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: var(--cds-gap-sm); }
+.jb-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); }
+.jb-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.jb-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 26px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.jb-sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.jb-ok { color: var(--color-ok); } .jb-warn { color: var(--color-warn); } .jb-bad { color: var(--color-bad); }
+.jb-seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; margin-bottom: var(--cds-gap-sm); }
+.jb-seg button { font: inherit; font-size: var(--cds-font-size-caption); padding: 6px 12px; border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.jb-seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.jb-legend { display: flex; flex-wrap: wrap; gap: 4px var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-bottom: var(--cds-gap-xs); }
+.jb-sw { display: inline-block; width: 12px; height: 10px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
+.jb-sw-plan { border: 1.5px solid var(--cds-chart-axis); background: var(--cds-chart-muted); }
+.jb-sw-c0 { background: var(--jb-c0); } .jb-sw-c1 { background: var(--jb-c1); } .jb-sw-c2 { background: var(--jb-c2); }
+.jb-sw-target { height: 0; border-top: 2px dashed var(--cds-chart-reference); border-radius: 0; vertical-align: 3px; }
+.jb-sw-vac { background: var(--color-ok); opacity: .25; }
+.jb-chart { position: relative; min-height: 200px; }
+.jb-chart svg text { font-size: var(--cds-font-size-caption); fill: var(--cds-text-secondary); font-family: var(--font-anthropic-sans); }
+.jb-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 8px 10px; font-size: var(--cds-font-size-caption); min-width: 150px; z-index: 2; }
+.jb-tip b { display: block; margin-bottom: 2px; }
+.jb-list { display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.jb-row-head { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); text-transform: capitalize; }
+.jb-row-name { font-weight: var(--cds-font-weight-medium); }
+.jb-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px var(--cds-gap-sm); margin-top: 6px; }
+.jb-m-l { font-size: 11px; color: var(--color-fg-muted); }
+.jb-m-v { font-variant-numeric: tabular-nums; }
+.jb-zbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; background: var(--cds-chart-muted); }
+.jb-zbar > i { display: block; height: 100%; }
+.jb-zlab { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 11px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.jb-zlab i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.jb-quests { display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.jb-q-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--cds-gap-sm); }
+.jb-q-title { font-weight: var(--cds-font-weight-medium); }
+.jb-q-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jb-bar { height: 8px; border-radius: 4px; background: var(--cds-chart-muted); margin: 8px 0; overflow: hidden; }
+.jb-bar > i { display: block; height: 100%; border-radius: 4px; background: var(--jb-c0); }
+.jb-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.jb-badge { min-width: 38px; height: 38px; padding: 0 6px; border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-variant-numeric: tabular-nums; border: 1.5px dashed var(--color-border-line); color: var(--color-fg-muted); box-sizing: border-box; }
+.jb-badge.jb-won { border: 0; background: var(--jb-c0); color: var(--color-bg); font-weight: var(--cds-font-weight-medium); }
+.jb-badge.jb-nextb { border-style: solid; border-color: var(--jb-c0); color: var(--color-fg); }
+.jb-q-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: 6px; }
+.jb-locked .jb-q-title { color: var(--color-fg-muted); }
+.jb-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--cds-gap-sm); }
+.jb-filters button { font: inherit; font-size: var(--cds-font-size-caption); padding: 5px 10px; border-radius: 14px; border: 1px solid var(--color-border-line); background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.jb-filters button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); border-color: var(--color-fg); }
+.jb-ctrl { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; margin-bottom: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.jb-month { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); text-transform: capitalize; margin: var(--cds-gap-sm) 0 2px; }
+.jb-ev { border-bottom: 1px solid var(--color-border-line); padding: 7px 0; }
+.jb-ev summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 74px 1fr; gap: var(--cds-gap-sm); align-items: start; }
+.jb-ev summary::-webkit-details-marker { display: none; }
+.jb-ev-name { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.jb-ev.jb-past { opacity: .55; }
+.jb-ev.jb-refused .jb-ev-title { text-decoration: line-through; color: var(--color-fg-muted); }
+.jb-ev-text { white-space: pre-wrap; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 8px 0 4px 82px; max-height: 420px; overflow-y: auto; }
+.jb-chip { font-size: 11px; line-height: 1; padding: 4px 7px; border-radius: 10px; border: 1px solid var(--color-border-line); white-space: nowrap; }
+.jb-chip-cat { font-weight: var(--cds-font-weight-medium); }
+.jb-ex { margin: 6px 0 0; padding-left: 18px; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.jb-dl { display: inline-block; margin-top: 8px; font-size: var(--cds-font-size-caption); padding: 7px 12px; border-radius: 14px; border: 1px solid var(--color-border-line); color: var(--color-fg); text-decoration: none; }
+.jb-passe[aria-pressed='true'] { background: var(--color-fg); color: var(--color-bg); }
+.jb-foot summary { cursor: pointer; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.jb-foot p { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+:root { --font-anthropic-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --font-anthropic-serif: Georgia, "Times New Roman", serif;
+  --color-bg: #fafaf8; --color-fg: #1f1e1d; --color-fg-muted: #6b6a66; --color-panel: #ffffff; --color-border-line: #e4e2dc; --color-ok: #2BA36B; --color-warn: #E0922F; --color-bad: #D24C4C;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 20px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-radius: 10px;
+  --cds-font-size-title: 30px; --cds-font-size-heading: 18px; --cds-font-size-body: 15px; --cds-font-size-caption: 13px; --cds-font-weight-medium: 600;
+  --cds-chart-grid: #ecebe6; --cds-chart-axis: #b9b7b0; --cds-chart-muted: #e9e7e1; --cds-chart-reference: #8a8780; --cds-text-secondary: #6b6a66;
+  --cds-surface-popover: #ffffff; --cds-border: #dddbd4; --cds-shadow-popover: 0 4px 16px rgba(0,0,0,.12); }
+@media (prefers-color-scheme: dark) { :root { --color-bg: #1c1b1a; --color-fg: #f2f1ee; --color-fg-muted: #a5a39d; --color-panel: #262523; --color-border-line: #3a3936;
+  --cds-chart-grid: #33322f; --cds-chart-axis: #5d5b56; --cds-chart-muted: #3a3936; --cds-chart-reference: #9b9890; --cds-text-secondary: #a5a39d; --cds-surface-popover: #2c2b29; --cds-border: #45433f; } }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body); }
+.jb { max-width: 980px; margin: 0 auto; padding: 16px; box-sizing: border-box; }
+.dash-btn, .dash-select { font: inherit; font-size: var(--cds-font-size-caption); padding: 6px 12px; border-radius: 14px; border: 1px solid var(--color-border-line); background: transparent; color: var(--color-fg); }
+.jb-maj { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+</style>
+</head>
+<body>
+
+<div class="jb">
+  <h1 class="jb-title">Saison 2026-2027</h1>
+  <div class="jb-maj">Chargement des données…</div>
+  <nav class="jb-nav" aria-label="Pages">
+    <button type="button" class="jb-tab" data-page="accueil" aria-pressed="true">Accueil</button>
+    <button type="button" class="jb-tab" data-page="metriques" aria-pressed="false">Métriques</button>
+    <button type="button" class="jb-tab" data-page="calendrier" aria-pressed="false">Calendrier</button>
+    <button type="button" class="jb-tab" data-page="entrainements" aria-pressed="false">Entraînements</button>
+  </nav>
+
+  <!-- ================= ACCUEIL ================= -->
+  <section class="jb-page" id="accueil">
+    <div class="jb-tiles" id="tuiles">
+      <div class="jb-tile"><div class="jb-tile-label">Forme (CTL)</div><div class="jb-big" data-draw="v" data-source="resume" data-field="ctl" data-row="0" data-fmt="int">—</div><div class="jb-sub">fatigue <span data-draw="v" data-source="resume" data-field="atl" data-row="0" data-fmt="int">—</span></div></div>
+      <div class="jb-tile"><div class="jb-tile-label">Fraîcheur (TSB)</div><div class="jb-big" data-draw="v" data-source="resume" data-field="tsb" data-row="0" data-fmt="signed">—</div><div class="jb-sub">selon Coggan</div></div>
+      <div class="jb-tile"><div class="jb-tile-label">CP</div><div class="jb-big"><span data-draw="v" data-source="resume" data-field="cp" data-row="0" data-fmt="int">—</span> W</div><div class="jb-sub">le <span data-draw="v" data-source="resume" data-field="cp_date" data-row="0" data-fmt="date">—</span></div></div>
+      <div class="jb-tile"><div class="jb-tile-label">PMA</div><div class="jb-big"><span data-draw="v" data-source="resume" data-field="pma" data-row="0" data-fmt="int">—</span> W</div><div class="jb-sub">le <span data-draw="v" data-source="resume" data-field="pma_date" data-row="0" data-fmt="date">—</span></div></div>
+      <div class="jb-tile"><div class="jb-tile-label">A1</div><div class="jb-big">J-<span data-draw="v" data-source="resume" data-field="a1_j" data-row="0" data-fmt="int">—</span></div><div class="jb-sub"><span data-draw="v" data-source="resume" data-field="a1_nom" data-row="0" data-fmt="text">—</span></div></div>
+      <div class="jb-tile"><div class="jb-tile-label">A2</div><div class="jb-big">J-<span data-draw="v" data-source="resume" data-field="a2_j" data-row="0" data-fmt="int">—</span></div><div class="jb-sub"><span data-draw="v" data-source="resume" data-field="a2_nom" data-row="0" data-fmt="text">—</span></div></div>
+      <div class="jb-tile"><div class="jb-tile-label">A3</div><div class="jb-big">J-<span data-draw="v" data-source="resume" data-field="a3_j" data-row="0" data-fmt="int">—</span></div><div class="jb-sub"><span data-draw="v" data-source="resume" data-field="a3_nom" data-row="0" data-fmt="text">—</span></div></div>
+    </div>
+
+    <section class="jb-card" id="charge-semaines">
+      <h2>Charge par semaine</h2>
+      <div class="jb-seg" role="group" aria-label="Période">
+        <button type="button" class="jb-wmode" data-mode="bloc" aria-pressed="true">Bloc</button>
+        <button type="button" class="jb-wmode" data-mode="macro" aria-pressed="false">Macrocycle</button>
+        <button type="button" class="jb-wmode" data-mode="saison" aria-pressed="false">Saison</button>
+      </div>
+      <div class="jb-legend">
+        <span><i class="jb-sw jb-sw-plan"></i>Prévu</span>
+        <span><i class="jb-sw jb-sw-c0"></i>Réalisé</span>
+        <span><i class="jb-sw jb-sw-target"></i>Cible du mésocycle</span>
+        <span><i class="jb-sw jb-sw-vac"></i>Vacances</span>
+        <span>A, B, C : objectifs · W : week-end choc</span>
+      </div>
+      <div class="jb-sub" data-draw="wtitle" data-source="semaines macros">—</div>
+      <div class="jb-chart" id="graphique-semaines" data-draw="weeks" data-source="semaines macros"></div>
+    </section>
+
+    <section class="jb-card" id="zones-meso">
+      <h2>Intensités du mésocycle</h2>
+      <div data-draw="zmeso" data-source="zones_meso"></div>
+    </section>
+
+    <section id="quetes">
+      <h2>Quêtes</h2>
+      <div class="jb-quests" data-draw="quests" data-source="quetes"></div>
+    </section>
+  </section>
+
+  <!-- ================= MÉTRIQUES ================= -->
+  <section class="jb-page" id="metriques" hidden>
+    <section class="jb-card" id="m-forme-card">
+      <h2>Forme, fatigue, fraîcheur</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mforme" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mforme" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mforme" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mforme" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>CTL</span><span><i class="jb-sw jb-sw-c1"></i>ATL</span><span><i class="jb-sw jb-sw-c2"></i>TSB</span><span>pointillés : projection du plan</span></div>
+      <div data-draw="mforme" data-source="charge charge_plan macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-cp-card">
+      <h2>CP et PMA</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mcp" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mcp" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mcp" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mcp" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>CP (W)</span><span><i class="jb-sw jb-sw-c1"></i>PMA (W)</span></div>
+      <div data-draw="mcp" data-source="cp pma macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-wkg-card">
+      <h2>Poids et CP en W/kg</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mwkg" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mwkg" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mwkg" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mwkg" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>CP en W/kg</span><span><i class="jb-sw jb-sw-c1"></i>Poids (kg)</span></div>
+      <div data-draw="mwkg" data-source="wkg poids macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-ef-card">
+      <h2>Facteur d'endurance</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mef" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mef" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mef" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mef" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>Route</span><span><i class="jb-sw jb-sw-c1"></i>Home trainer</span><span>métrique Nolio, W ÷ FC</span></div>
+      <div data-draw="mef" data-source="facteur macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-vfc-card">
+      <h2>VFC du matin</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mvfc" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mvfc" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mvfc" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mvfc" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>RMSSD (ms)</span><span><i class="jb-sw jb-sw-c1"></i>FC repos (bpm)</span><span>mesures de l'app Nolio</span></div>
+      <div data-draw="mvfc" data-source="vfc macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-gluc-card">
+      <h2>Glucides par heure</h2>
+      <div class="jb-seg" role="group" aria-label="Période"><button type="button" class="jb-tf" data-chart="mgluc" data-mode="realise" aria-pressed="true">Réalisé</button><button type="button" class="jb-tf" data-chart="mgluc" data-mode="meso" aria-pressed="false">Mésocycle</button><button type="button" class="jb-tf" data-chart="mgluc" data-mode="macro" aria-pressed="false">Macrocycle</button><button type="button" class="jb-tf" data-chart="mgluc" data-mode="saison" aria-pressed="false">Saison</button></div>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>Chaque sortie</span><span><i class="jb-sw jb-sw-c1"></i>Validés max</span></div>
+      <div data-draw="mgluc" data-source="glucides glucides_max macros cycles"></div>
+    </section>
+    <section class="jb-card" id="m-profil-card">
+      <h2>Profil de puissance</h2>
+      <div class="jb-legend"><span><i class="jb-sw jb-sw-c0"></i>Cette saison</span><span><i class="jb-sw jb-sw-c1"></i>Saison précédente</span><span><i class="jb-sw jb-sw-c2"></i>Tout temps</span></div>
+      <div class="jb-chart" data-draw="mprofil" data-source="profil"></div>
+    </section>
+  </section>
+
+  <!-- ================= CALENDRIER ================= -->
+  <section class="jb-page" id="calendrier" hidden>
+    <section class="jb-card" id="cal-card">
+      <h2>Calendrier de la saison</h2>
+      <div class="jb-filters" role="group" aria-label="Filtrer par label">
+        <button type="button" class="jb-lab" data-lab="tout" aria-pressed="true">Tout</button>
+        <button type="button" class="jb-lab" data-lab="macro" aria-pressed="false">Macrocycles</button>
+        <button type="button" class="jb-lab" data-lab="meso" aria-pressed="false">Mésocycles</button>
+        <button type="button" class="jb-lab" data-lab="objectif" aria-pressed="false">Objectifs et courses</button>
+        <button type="button" class="jb-lab" data-lab="choc" aria-pressed="false">Week-ends chocs</button>
+        <button type="button" class="jb-lab" data-lab="challenge" aria-pressed="false">Challenges</button>
+        <button type="button" class="jb-lab" data-lab="vacances" aria-pressed="false">Vacances</button>
+      </div>
+      <div class="jb-filters jb-stats" role="group" aria-label="Statut des courses" hidden>
+        <button type="button" class="jb-stat" data-stat="tous" aria-pressed="true">Tous les statuts</button>
+        <button type="button" class="jb-stat" data-stat="Gardée" aria-pressed="false">Gardées</button>
+        <button type="button" class="jb-stat" data-stat="À décider" aria-pressed="false">À décider</button>
+        <button type="button" class="jb-stat" data-stat="En attente" aria-pressed="false">En attente</button>
+        <button type="button" class="jb-stat" data-stat="Refusée" aria-pressed="false">Refusées</button>
+      </div>
+      <div class="jb-ctrl">
+        <label>Mois
+          <select class="dash-select jb-mois" aria-label="Mois">
+            <option value="">Toute la saison</option>
+            <option value="2026-10">octobre 2026</option><option value="2026-11">novembre 2026</option><option value="2026-12">décembre 2026</option>
+            <option value="2027-01">janvier 2027</option><option value="2027-02">février 2027</option><option value="2027-03">mars 2027</option>
+            <option value="2027-04">avril 2027</option><option value="2027-05">mai 2027</option><option value="2027-06">juin 2027</option>
+            <option value="2027-07">juillet 2027</option><option value="2027-08">août 2027</option><option value="2027-09">septembre 2027</option>
+            <option value="2027-10">octobre 2027</option>
+          </select>
+        </label>
+        <button type="button" class="dash-btn jb-passe" aria-pressed="false">Afficher le passé</button>
+      </div>
+      <div class="jb-sub">Touche une ligne pour lire son contenu (pour les objectifs A et B : parcours et stratégie de course).</div>
+      <div data-draw="cal" data-source="calendrier"></div>
+    </section>
+  </section>
+
+  <!-- ================= ENTRAÎNEMENTS ================= -->
+  <section class="jb-page" id="entrainements" hidden>
+    <section id="a-venir">
+      <h2>Les 7 prochains jours</h2>
+      <div class="jb-sub">Séances vélo : intensités en % de CP (Z1 sous 55 %, Z2 55-75 %, Z3 75-90 %, Z4 90-105 %, Z5 et plus au-delà). Le fichier .fit garde ces % : sur un Garmin, ils s'appliquent à la FTP réglée sur le compteur. Sur un Edge, copie-le par câble dans le dossier Garmin/NewFiles.</div>
+      <div class="jb-list" data-draw="next7" data-source="seances7"></div>
+    </section>
+    <section id="faites">
+      <h2>Les 7 derniers jours</h2>
+      <div class="jb-list" data-draw="past7" data-source="recentes"></div>
+    </section>
+  </section>
+
+  <details class="jb-foot" id="definitions">
+    <summary>Définitions</summary>
+    <p>Prévu : somme des TSS des séances prévues de la semaine (lundi au dimanche). Réalisé : charge du jour calculée par Nolio, renfo compris. Cible : la charge écrite pour chaque semaine dans la description du cycle.</p>
+    <p>W moyen et FC moyenne : moyennes des tours de la séance, puissance hors arrêts. Zones : temps par zone calculé par Nolio.</p>
+    <p>Saison : du 26/10/2026 (début de la préparation générale) au 31/10/2027 (fin du challenge et plaisir). Réalisé : du 26/10/2026 à aujourd'hui. Km et D+ : vélo, route et home trainer. Les séances importées de Strava n'ont pas de données (conditions de Strava).</p>
+  </details>
+</div>
+
+<script src="dash.js"></script>
+<script src="base.js"></script>
+<script src="calcs.js"></script>
+<script src="accueil.js"></script>
+<script src="metriques.js"></script>
+<script src="calendrier.js"></script>
+<script src="entrainements.js"></script>
+
+</body>
+</html>
