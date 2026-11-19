@@ -162,7 +162,7 @@ const jbStripCompet = (el, d) => {
     g.append('rect').attr('x', it.x - 4).attr('y', ty - 13).attr('width', it.w).attr('height', 17).style('fill', 'transparent')
       .on('pointerenter pointerdown', (e2) => show(e2, [e.nom, (e.role ? e.role + ' · ' : '') + J.day(e.debut) + ' · ' + J.jx(e.debut), [e.km ? J.num(e.km) + ' km' : '', e.dplus ? J.num(e.dplus) + ' m D+' : ''].filter(Boolean).join(' · '), e.statut].filter(Boolean)))
       .on('pointerleave', hide)
-      .on('click', () => { const t2 = document.getElementById((e.kind === 'prep' ? 'prep-' : 'ev-') + e.id); if (t2) { t2.open = true; t2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
+      .on('click', () => { if (window.jbMoisC && e.kind !== 'prep') { window.jbMoisC = ''; dash.draw('cweeks'); } const t2 = document.getElementById((e.kind === 'prep' ? 'prep-' : 'ev-') + e.id); if (t2) { t2.open = true; t2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
   };
   for (const it of preps) {
     const e = it.e, x0 = it.x, x1 = Math.max(x0 + 6, x(P(J.add(e.fin || e.debut, 1))));
@@ -262,7 +262,7 @@ dash.draw('cstrip', (el) => {
     }
     g.on('pointerenter pointerdown', (e2) => show(e2, [e.nom, (e.role ? e.role + ' · ' : '') + J.day(e.debut) + ' · ' + J.jx(e.debut), [e.km ? J.num(e.km) + ' km' : '', e.dplus ? J.num(e.dplus) + ' m D+' : ''].filter(Boolean).join(' · '), e.statut].filter(Boolean)))
       .on('pointerleave', hide)
-      .on('click', () => { const t2 = document.getElementById('ev-' + e.id); if (t2) { t2.open = true; t2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
+      .on('click', () => { if (window.jbMoisC && !e.debut.startsWith(window.jbMoisC)) { window.jbMoisC = ''; dash.draw('cweeks'); } const t2 = document.getElementById('ev-' + e.id); if (t2) { t2.open = true; t2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
   }
   const tx = x(P(J.today));
   if (tx >= L) { svg.append('line').attr('x1', tx).attr('x2', tx).attr('y1', 16).attr('y2', H - 6).style('stroke', 'var(--ink)').style('stroke-width', 1.5); }
@@ -297,62 +297,71 @@ const jbItem = (e, pre) => {
   return det;
 };
 
+/* Calendrier des courses : une liste (courses et objectifs seulement), filtrable par mois */
+window.jbMoisC = window.jbMoisC || '';
 dash.draw('cweeks', (el) => {
-  const d = dash.data('evenements'), cy = dash.data('cycles');
+  const d = dash.data('evenements'), ob = dash.data('objectifs');
   if (J.wait(el, d)) return;
   el.replaceChildren();
   const F = window.jbF;
-  const from = F.passe ? J.mon(J.S0) : J.mon(J.today);
-  const ev = d.data.filter((e) => jbVisible(e) && e.kind !== 'prep' && (e.fin || e.debut) >= from);
-  const cycles = cy.status === 'ok' ? cy.data : [];
-  const mesoOf = (w) => cycles.find((c) => c.debut <= J.add(w, 6) && (c.fin || c.debut) >= w);
-  const weeks = [];
-  for (let w = from; w <= J.S1; w = J.add(w, 7)) weeks.push(w);
-  let empty = [], emptyItems = [], emptyMesos = [];
-  const flushGap = () => {
-    if (!empty.length) return;
-    const n = empty.length, big = n >= 5;
-    const g = J.el('div', 'gap' + (big ? ' big' : ''));
-    const hd = J.el('div', 'gap-h');
-    hd.appendChild(J.el('b', null, (big ? 'Trou de ' : '') + (n === 1 ? '1 semaine sans course' : n + ' semaines sans course')));
-    hd.appendChild(J.el('span', null, 'du ' + J.dm(empty[0]) + ' au ' + J.dm(J.add(empty[n - 1], 6))));
-    g.appendChild(hd);
-    if (emptyItems.length || emptyMesos.length) {
-      const l = J.el('div', 'wk-l');
-      const all = emptyItems.map((e) => [e.debut, jbItem(e)]).concat(emptyMesos.map((m) => { const dv = J.el('div', 'meso-div in-gap'); dv.style.setProperty('--mc', /^#[0-9a-f]{6}$/i.test(m.couleur || '') ? m.couleur : 'var(--muted)'); dv.append(J.el('b', null, m.nom), J.el('span', null, J.dm(m.debut) + ' → ' + J.dm(m.fin))); return [m.debut, dv]; }));
-      all.sort((p, q) => (p[0] < q[0] ? -1 : p[0] > q[0] ? 1 : 0));
-      for (const [, n] of all) l.appendChild(n);
-      g.appendChild(l);
+  const lieu = {}; if (ob.status === 'ok') for (const o of ob.data) lieu[o.id] = o.lieu || '';
+  const from = F.passe ? J.S0 : J.today;
+  const all = d.data.filter((e) => jbRaceKind(e) && jbVisible(e) && e.debut >= from);
+  // filtre par mois
+  const months = Array.from(new Set(all.map((e) => e.debut.slice(0, 7)))).sort();
+  if (window.jbMoisC && !months.includes(window.jbMoisC)) window.jbMoisC = '';
+  const bar = J.el('div', 'ctrl');
+  const lab = J.el('label', null, 'Mois ');
+  const sel = J.el('select', 'select'); sel.setAttribute('aria-label', 'Mois');
+  sel.appendChild(new Option('Toute la saison (' + all.length + ')', ''));
+  for (const m of months) sel.appendChild(new Option(J.mlong(m) + ' (' + all.filter((e) => e.debut.startsWith(m)).length + ')', m, false, m === window.jbMoisC));
+  sel.value = window.jbMoisC;
+  sel.addEventListener('change', () => { window.jbMoisC = sel.value; dash.draw('cweeks'); });
+  lab.appendChild(sel); bar.appendChild(lab); el.appendChild(bar);
+  const rows = all.filter((e) => !window.jbMoisC || e.debut.startsWith(window.jbMoisC));
+  if (!rows.length) { el.appendChild(J.el('div', 'sub', 'Aucune course avec ces filtres. Rallume un statut ou change de mois.')); return; }
+  const head = J.el('div', 'cl-row cl-head');
+  for (const t of ['Date', 'Course', 'Lieu', 'Distance', 'D+', '']) head.appendChild(J.el('span', null, t));
+  el.appendChild(head);
+  let month = '';
+  for (const e of rows) {
+    const m = e.debut.slice(0, 7);
+    if (!window.jbMoisC && m !== month) { month = m; el.appendChild(J.el('div', 'cl-month', J.mlong(m))); }
+    const det = J.el('details', 'cl ' + (jbRoleCls(e) ? 'r-' + jbRoleCls(e) : '') + (e.statut === 'Refusée' ? ' refused' : '') + (e.debut < J.today ? ' past' : ''));
+    det.id = 'ev-' + e.id;
+    const s = J.el('summary', 'cl-row');
+    const dt = J.el('span', 'cl-d'); dt.append(J.el('b', null, String(Number(e.debut.slice(8, 10)))), J.el('span', null, J.wd(e.debut) + ' ' + J.mshort(e.debut)));
+    const nm = J.el('span', 'cl-n'); nm.appendChild(J.el('b', null, e.nom));
+    const tags = J.el('span', 'ci-meta');
+    if (e.role) tags.appendChild(J.el('span', 'tag ' + jbRoleCls(e), e.role));
+    if (e.statut) { const t = J.el('span', 'tag', e.statut); if (e.couleur) { t.style.color = e.couleur; t.style.borderColor = e.couleur; } tags.appendChild(t); }
+    nm.appendChild(tags);
+    const l = lieu[e.id] || '';
+    const mob = [l, e.km ? J.num(e.km) + ' km' : '', e.dplus ? J.num(e.dplus) + ' m D+' : ''].filter(Boolean).join(' · ');
+    if (mob) nm.appendChild(J.el('span', 'cl-mob', mob));
+    s.append(dt, nm, J.el('span', 'cl-l', l || '—'), J.el('span', 'cl-v', e.km ? J.num(e.km) + ' km' : '—'), J.el('span', 'cl-v', e.dplus ? J.num(e.dplus) + ' m' : '—'), J.el('span', 'cl-j', e.debut < J.today ? '' : J.jx(e.debut)));
+    det.appendChild(s);
+    // toutes les infos
+    const body = J.el('div', 'cl-b');
+    const facts = J.el('div', 'cl-facts');
+    const fact = (k, v) => { if (!v) return; const f = J.el('div'); f.append(J.el('span', 'l', k), J.el('span', 'v', v)); facts.appendChild(f); };
+    fact('Date', J.wd(e.debut, true) + ' ' + J.dm(e.debut) + '/' + e.debut.slice(0, 4));
+    fact('Lieu', l);
+    fact('Distance', e.km ? J.num(e.km) + ' km' : '');
+    fact('Dénivelé', e.dplus ? J.num(e.dplus) + ' m D+' : '');
+    fact('Rôle', e.role);
+    fact('Statut', e.statut);
+    fact('Dans', e.debut < J.today ? 'passée' : J.jx(e.debut));
+    body.appendChild(facts);
+    if (e.debut >= J.today && e.statut !== 'Refusée') {
+      const a = J.btn('Ajouter à mon agenda', 'cal');
+      J.ics(a, { uid: e.id, debut: e.debut, fin: e.fin, titre: e.nom, texte: [l, e.km ? J.num(e.km) + ' km' : '', e.dplus ? J.num(e.dplus) + ' m D+' : '', 'Avec ' + window.CONFIG.prenom].filter(Boolean).join(' · ') });
+      const box = J.el('div', 'actions'); box.appendChild(a); body.appendChild(box);
     }
-    el.appendChild(g);
-    empty = []; emptyItems = []; emptyMesos = [];
-  };
-  let lastMeso = null;
-  for (const w of weeks) {
-    const m = mesoOf(w);
-    const items = ev.filter((e) => e.debut >= w && e.debut <= J.add(w, 6));
-    const races = items.filter(jbRaceKind);
-    const mesoStarts = F.types.has('meso') && m && m.nom !== lastMeso && m.debut >= w && m.debut <= J.add(w, 6);
-    if (m) lastMeso = m.nom;
-    if (!races.length) { empty.push(w); emptyItems.push(...items); if (mesoStarts) emptyMesos.push(m); continue; }
-    flushGap();
-    if (mesoStarts) {
-      const dv = J.el('div', 'meso-div'); dv.style.setProperty('--mc', /^#[0-9a-f]{6}$/i.test(m.couleur || '') ? m.couleur : 'var(--muted)');
-      dv.append(J.el('b', null, m.nom), J.el('span', null, J.dm(m.debut) + ' → ' + J.dm(m.fin)));
-      el.appendChild(dv);
-    }
-    const row = J.el('div', 'wk' + (w === J.mon(J.today) ? ' now' : ''));
-    if (F.types.has('meso') && m) row.style.setProperty('--mc', /^#[0-9a-f]{6}$/i.test(m.couleur || '') ? m.couleur : 'var(--line)');
-    const h = J.el('div', 'wk-h');
-    h.append(J.el('b', null, 'sem. du ' + J.dm(w)), J.el('span', null, races.length === 1 ? '1 course' : races.length + ' courses'));
-    row.appendChild(h);
-    const list = J.el('div', 'wk-l');
-    for (const e of items) list.appendChild(jbItem(e));
-    row.appendChild(list);
-    el.appendChild(row);
+    body.appendChild(J.el('div', 'ev-text', e.texte || 'Pas de description.'));
+    det.appendChild(body);
+    el.appendChild(det);
   }
-  flushGap();
-  if (!el.childElementCount) el.appendChild(J.el('div', 'sub', 'Rien avec ces filtres. Rallume un statut ou un type.'));
 });
 
 /* Objectifs de préparation (C et week-ends chocs), à part */
