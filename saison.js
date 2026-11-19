@@ -202,6 +202,7 @@ dash.draw('days14', (el) => {
     const ns = nt.status === 'ok' ? nt.data.filter((n) => n.debut <= d && (n.fin || n.debut) >= d) : [];
     const box = J.el('div', 'day' + (i === 0 ? ' today' : '') + (!ses.length && !races.length ? ' off' : ''));
     const h = J.el('div', 'day-h'); h.append(J.el('span', null, i === 0 ? 'aujourd’hui' : i === 1 ? 'demain' : J.wd(d)), J.el('b', null, String(Number(d.slice(8, 10))))); box.appendChild(h);
+    const mt = J.meteo && J.meteo(d); if (mt) box.appendChild(J.el('div', 'wx', mt));
     for (const r of races) { const p = J.el('span', 'pill race'); p.append(J.el('b', null, r.nom), document.createTextNode(r.type ? r.type.toUpperCase() : 'course')); box.appendChild(p); }
     for (const n of ns) {
       const choc = /^Week-end choc/i.test(n.nom || '');
