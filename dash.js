@@ -16,7 +16,7 @@
   };
   const METRIQUES = ['cp', 'pma', 'poids', 'rmssd', 'fcrepos', 'facteur', 'glucides', 'glucides_max', 'sudation'];
 
-  const build = (h, j) => {
+  const build = (h, j, a) => {
     const d = {};
     d.charge = (j.charge || []).map(obj(COLS.charge));
     d.charge_plan = (h.charge_plan || []).map(obj(COLS.charge_plan));
@@ -33,6 +33,7 @@
     d.cycles = h.cycles || [];
     d.statuts = h.statuts || [];
     d.saison_note = h.saison_note ? [h.saison_note] : [];
+    d.amis = [a || {}];
     d.seances7 = (j.seances7 || []).map((r) => Object.assign({}, r, { profil: JSON.stringify(r.profil || []) }));
     d.recentes = (j.recentes || []).map((r) => {
       let tw = 0, sw = 0, th = 0, sh = 0;
@@ -45,7 +46,7 @@
 
   const ok = (rows) => ({ status: 'ok', data: rows, message: '', refreshing: false, truncated: false, meta: null });
   window.dash = {
-    colors: ['#2F6FDE', '#E07B39', '#2BA36B', '#8E5BD6', '#D24C6B', '#6B7A8F'],
+    colors: ['var(--c0)', 'var(--c1)', 'var(--c2)', '#8E5BD6', '#D24C6B', '#6B7A8F'],
     loader: () => {},
     setLink: (name) => { try { history.replaceState(null, '', '#' + name); } catch (e) { /* rien */ } },
     calc: (id, def) => { calcs[id] = def; },
@@ -73,19 +74,20 @@
     drawAll: () => { for (const n of Object.keys(draws)) window.dash.draw(n); }
   };
 
-  Promise.all(['data/hebdo.json', 'data/jour.json'].map((u) => fetch(u + '?v=' + Date.now()).then((r) => (r.ok ? r.json() : {})).catch(() => ({}))))
-    .then(([h, j]) => {
-      Object.assign(raw, build(h, j));
+  Promise.all(['data/hebdo.json', 'data/jour.json', 'data/amis.json'].map((u) => fetch(u + '?v=' + Date.now()).then((r) => (r.ok ? r.json() : {})).catch(() => ({}))))
+    .then(([h, j, a]) => {
+      Object.assign(raw, build(h, j, a));
       status = 'ok';
-      const m = document.querySelector('.jb-maj');
-      if (m) m.textContent = 'Données Nolio du ' + [j.maj, h.maj].filter(Boolean).map((s) => s.replace('T', ' à ').slice(0, 19)).join(' (semaine : ') + (h.maj && j.maj ? ')' : '');
+      const m = document.getElementById('maj');
+      const f = (s) => s.slice(8, 10) + '/' + s.slice(5, 7) + ' à ' + s.slice(11, 16);
+      if (m) m.textContent = j.maj ? 'Mis à jour depuis Nolio le ' + f(j.maj) : 'Données Nolio indisponibles';
       window.dash.drawAll();
     })
     .catch((e) => { status = 'error'; message = String(e); window.dash.drawAll(); });
 
   // Redessine quand une page cachée s'affiche ou que la largeur change
   const mo = new MutationObserver((list) => { if (list.some((m) => !m.target.hidden)) window.dash.drawAll(); });
-  const watch = () => { for (const s of document.querySelectorAll('.jb-page, .jb-efzone')) mo.observe(s, { attributes: true, attributeFilter: ['hidden'] }); };
+  const watch = () => { for (const s of document.querySelectorAll('.page')) mo.observe(s, { attributes: true, attributeFilter: ['hidden'] }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
   let w = window.innerWidth;
   window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - w) > 40) { w = window.innerWidth; window.dash.drawAll(); } });
