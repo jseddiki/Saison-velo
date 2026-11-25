@@ -89,7 +89,7 @@ dash.draw('frise', (el) => {
     else if (o.type === 'b') flags.push({ d: o.date, k: 'b', t: 'B', n: o.nom, s, km: o.km, dp: o.dplus });
     else if (o.code === 'C') flags.push({ d: o.date, k: 'c', t: 'C', n: o.nom, s, km: o.km, dp: o.dplus });
     else if (s !== 'Refusée' && String(o.entete || '').toUpperCase().startsWith('CHALLENGE')) flags.push({ d: o.date, k: 'ch', t: 'Challenge', n: o.nom, s, km: o.km, dp: o.dplus });
-    else if (s === 'Gardée') flags.push({ d: o.date, k: 'm', t: 'Course', n: o.nom, s, km: o.km, dp: o.dplus });
+    else if (s === 'Gardée' || s === 'Inscrit') flags.push({ d: o.date, k: 'm', t: 'Course', n: o.nom, s, km: o.km, dp: o.dplus });
   }
   for (const n of notes) {
     if (n.type === 'goal' || /^C · /.test(n.nom || '')) flags.push({ d: n.debut, k: 'c', t: 'C', n: String(n.nom).replace(/^C · /, ''), s: '' });
