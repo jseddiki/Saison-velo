@@ -29,9 +29,9 @@ dash.calc('evenements', {
 });
 
 /* Filtres */
-const JB_STATUTS = ['Gardée', 'À décider', 'En attente', 'Sélection requise', 'Refusée'];
+const JB_STATUTS = ['Inscrit', 'Gardée', 'À décider', 'En attente', 'Sélection requise', 'Refusée'];
 const JB_TYPES = [['ab', 'Objectifs A et B'], ['course', 'Autres courses'], ['challenge', 'Challenges'], ['choc', 'Week-ends chocs'], ['prep', 'Objectifs de préparation'], ['meso', 'Mésocycles']];
-window.jbF = window.jbF || { statuts: new Set(['Gardée', 'À décider', 'En attente', 'Sélection requise']), types: new Set(JB_TYPES.map((t) => t[0])), passe: false, vue: 'saison' };
+window.jbF = window.jbF || { statuts: new Set(['Inscrit', 'Gardée', 'À décider', 'En attente', 'Sélection requise']), types: new Set(JB_TYPES.map((t) => t[0])), passe: false, vue: 'saison' };
 if (!window.jbF.vue) window.jbF.vue = 'saison';
 
 const jbVisible = (e) => {
